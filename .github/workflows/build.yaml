@@ -173,7 +173,7 @@ jobs:
       - name: Android test
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
+          api-level: 30
           arch: x86_64
           emulator-boot-timeout: 20000
           script: ./gradlew assembleAndroidTest connectedAndroidDeviceTest

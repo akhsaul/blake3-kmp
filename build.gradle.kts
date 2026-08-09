@@ -6,6 +6,7 @@ buildscript {
     }
     dependencies {
         classpath(libs.mavenPublish.gradle.plugin)
+        classpath(libs.testDistributionGradlePlugin)
     }
 }
 

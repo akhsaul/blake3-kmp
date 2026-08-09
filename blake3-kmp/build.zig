@@ -50,7 +50,10 @@ fn setupTarget(
     lib.addIncludePath(b.path("../BLAKE3/c"));
 
 
-    lib.linkLibC();
+    const is_android = if (abi) |a| (a == .android or a == .androideabi) else false;
+    if (!is_android) {
+        lib.linkLibC();
+    }
     if (tag == .macos or tag == .ios) {
         lib.linkSystemLibrary("System");
     }

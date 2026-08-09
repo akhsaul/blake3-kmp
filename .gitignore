@@ -1,0 +1,53 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# Kotlin & Gradle
+.kotlin/
+.gradle/
+**/build/
+!src/**/build/
+local.properties
+
+# IDE & OS
+*.iml
+.idea/
+.DS_Store
+captures
+.externalNativeBuild
+.cxx
+
+# Xcode & Apple
+xcuserdata
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
+
+# Dependencies
+node_modules/
+
+# Zig build output
+zig-out/
+.zig-cache/
+examples/

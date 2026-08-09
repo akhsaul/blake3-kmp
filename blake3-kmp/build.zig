@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
 pub fn build(b: *std.Build) !void {
     const deleteLib = b.addRemoveDirTree(.{ .cwd_relative = b.getInstallPath(.prefix, "lib") });
@@ -131,7 +132,7 @@ fn getNdkPath(b: *std.Build) ?[]const u8 {
 
 fn addNdkSysroot(b: *std.Build, lib: *std.Build.Step.Compile, arch: std.Target.Cpu.Arch) void {
     const ndk = getNdkPath(b) orelse return;
-    const host_tag = switch (std.Target.current.os.tag) {
+    const host_tag = switch (builtin.os.tag) {
         .macos => "darwin-x86_64",
         .windows => "windows-x86_64",
         else => "linux-x86_64",

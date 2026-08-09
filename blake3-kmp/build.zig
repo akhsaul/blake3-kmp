@@ -5,24 +5,28 @@ pub fn build(b: *std.Build) !void {
     const deleteLib = b.addRemoveDirTree(.{ .cwd_relative = b.getInstallPath(.prefix, "lib") });
     b.getInstallStep().dependOn(&deleteLib.step);
 
+    const jvm_step = b.step("jvm", "Build JVM Desktop targets");
+    const android_step = b.step("android", "Build Android targets");
+
     // --- Desktop Targets ---
-    try setupTarget(b, &deleteLib.step, .linux, .aarch64, .gnu, "aarch64");
-    try setupTarget(b, &deleteLib.step, .linux, .x86_64, .gnu, "amd64");
-    try setupTarget(b, &deleteLib.step, .macos, .aarch64, null, "aarch64");
-    try setupTarget(b, &deleteLib.step, .macos, .x86_64, null, "x86_64");
-    try setupTarget(b, &deleteLib.step, .windows, .x86_64, null, "amd64");
-    try setupTarget(b, &deleteLib.step, .windows, .aarch64, null, "aarch64");
+    try setupTarget(b, &deleteLib.step, jvm_step, .linux, .aarch64, .gnu, "aarch64");
+    try setupTarget(b, &deleteLib.step, jvm_step, .linux, .x86_64, .gnu, "amd64");
+    try setupTarget(b, &deleteLib.step, jvm_step, .macos, .aarch64, null, "aarch64");
+    try setupTarget(b, &deleteLib.step, jvm_step, .macos, .x86_64, null, "x86_64");
+    try setupTarget(b, &deleteLib.step, jvm_step, .windows, .x86_64, null, "amd64");
+    try setupTarget(b, &deleteLib.step, jvm_step, .windows, .aarch64, null, "aarch64");
 
     // --- Android Targets ---
-    try setupTarget(b, &deleteLib.step, .linux, .aarch64, .android, "arm64-v8a");
-    try setupTarget(b, &deleteLib.step, .linux, .arm, .androideabi, "armeabi-v7a");
-    try setupTarget(b, &deleteLib.step, .linux, .x86_64, .android, "x86_64");
-    try setupTarget(b, &deleteLib.step, .linux, .x86, .android, "x86");
+    try setupTarget(b, &deleteLib.step, android_step, .linux, .aarch64, .android, "arm64-v8a");
+    try setupTarget(b, &deleteLib.step, android_step, .linux, .arm, .androideabi, "armeabi-v7a");
+    try setupTarget(b, &deleteLib.step, android_step, .linux, .x86_64, .android, "x86_64");
+    try setupTarget(b, &deleteLib.step, android_step, .linux, .x86, .android, "x86");
 }
 
 fn setupTarget(
     b: *std.Build,
-    step: *std.Build.Step,
+    all_step: *std.Build.Step,
+    group_step: *std.Build.Step,
     tag: std.Target.Os.Tag,
     arch: std.Target.Cpu.Arch,
     abi: ?std.Target.Abi,
@@ -116,7 +120,8 @@ fn setupTarget(
         },
     });
 
-    step.dependOn(&install.step);
+    all_step.dependOn(&install.step);
+    group_step.dependOn(&install.step);
 }
 
 fn getNdkPath(b: *std.Build) ?[]const u8 {

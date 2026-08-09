@@ -14,7 +14,7 @@ env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
 
 jobs:
-  native-test-binaries:
+  build-binaries:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -32,10 +32,10 @@ jobs:
           use-cache: false
 
       - run: |
-          zig build -p src/jvmMain/resources/jni
-          zig build -p src/androidMain/jniLibs
-          ls -la src/jvmMain/resources/jni
-          ls -la src/androidMain/jniLibs
+          zig build jvm -p src/jvmMain/resources/jni
+          zig build android -p src/androidMain/jniLibs
+          ls -lRh src/jvmMain/resources/jni
+          ls -lRh src/androidMain/jniLibs
         working-directory: blake3-kmp
 
       - uses: actions/upload-artifact@v7
@@ -52,8 +52,6 @@ jobs:
 
   static-checks:
     runs-on: ubuntu-latest
-    needs:
-      - native-test-binaries
     steps:
       - uses: actions/checkout@v7
         with:
@@ -78,22 +76,20 @@ jobs:
       - name: Static checks
         run: ./gradlew check -x testAndroid -x testAndroidHostTest -x jvmTest -x androidConnectedCheck
 
-  jvm-test-binaries:
+  jvm-test-distribution:
     runs-on: ubuntu-latest
     needs:
+      - build-binaries
       - static-checks
     steps:
       - uses: actions/checkout@v7
         with:
           submodules: true
 
-      - uses: mlugg/setup-zig@v2
+      - uses: actions/download-artifact@v7
         with:
-          version: 0.15.2
-          use-cache: false
-
-      - run: zig build -p src/jvmMain/resources/jni
-        working-directory: blake3-kmp
+          name: blake3-kmp-jvm-binary
+          path: blake3-kmp/src/jvmMain/resources/jni
 
       - uses: actions/setup-java@v5
         with:
@@ -104,24 +100,19 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: jni-binaries
-          path: blake3-kmp/src/jvmMain/resources/jni
-          if-no-files-found: error
-
-      - uses: actions/upload-artifact@v7
-        with:
           name: blake3-kmp-jvm-tests
           path: blake3-kmp/build/install/jvmTest
           if-no-files-found: error
 
-  platform-test:
+  jvm-platform-test:
     needs:
-      - jvm-test-binaries
-      - native-test-binaries
+      - jvm-test-distribution
     strategy:
       fail-fast: false
       matrix:
         platform:
+          - os: macOS-15-intel
+            native-target: macosX64
           - os: macOS-15
             native-target: macosArm64
           - os: ubuntu-24.04
@@ -130,6 +121,8 @@ jobs:
             native-target: linuxArm64
           - os: windows-2025
             native-target: mingwX64
+          - os: windows-11-arm
+            native-target: mingwArm64
 
     runs-on: ${{ matrix.platform.os }}
 
@@ -145,27 +138,15 @@ jobs:
         with:
           name: blake3-kmp-jvm-tests
 
-      - uses: actions/download-artifact@v7
-        if: matrix.platform.native-target != 'skip'
-        with:
-          name: blake3-kmp-native-tests
-
       - name: Run JVM tests
         run: |
           chmod +x bin/blake3-kmp-test || true
           bin/blake3-kmp-test
 
-      - name: Run native tests
-        if: matrix.platform.native-target != 'skip'
-        shell: bash
-        run: |
-          chmod +x ${{ matrix.platform.native-target }}/debugTest/test.*
-          ${{ matrix.platform.native-target }}/debugTest/test.*
-
   android-test:
     runs-on: ubuntu-latest
     needs:
-      - jvm-test-binaries
+      - jvm-test-distribution
     steps:
       - uses: actions/checkout@v7
         with:
@@ -176,13 +157,10 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - uses: mlugg/setup-zig@v2
+      - uses: actions/download-artifact@v7
         with:
-          version: 0.15.2
-          use-cache: false
-
-      - run: zig build -p src/androidMain/jniLibs
-        working-directory: blake3-kmp
+          name: blake3-kmp-android-binary
+          path: blake3-kmp/src/androidMain/jniLibs
 
       - name: Enable KVM (for Android test)
         run: |
@@ -195,13 +173,20 @@ jobs:
         with:
           api-level: 29
           emulator-boot-timeout: 20000
-          script: ./gradlew assembleAndroidTest
+          script: ./gradlew assembleAndroidTest connectedCheck
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ always() }}
+        with:
+          name: test-report-${{ matrix.os }}
+          path: '**/build/reports/tests/**'
+          retention-days: 1
 
   final-status:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     needs:
-      - platform-test
+      - jvm-platform-test
       - android-test
       - static-checks
     steps:
@@ -216,7 +201,7 @@ jobs:
   publish:
     needs:
       - final-status
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
 
     steps:
@@ -229,18 +214,23 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - uses: mlugg/setup-zig@v2
+      - uses: actions/download-artifact@v7
         with:
-          version: 0.15.2
-          use-cache: false
+          name: blake3-kmp-jvm-binary
+          path: blake3-kmp/src/jvmMain/resources/jni
 
-      - run: |
-          zig build -p src/jvmMain/resources/jni
-          zig build -p src/androidMain/jniLibs
-        working-directory: blake3-kmp
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-android-binary
+          path: blake3-kmp/src/androidMain/jniLibs
 
-      - run: ./gradlew publishToMavenCentral
-        env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SECRET_KEY }}
+      - run: ./gradlew publishToMavenLocal
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: blake3-kmp-published-library
+          path: |
+            blake3-kmp/build/outputs/aar/*.aar
+            blake3-kmp/build/libs/*.jar
+            ~/.m2/repository/com/akhsaul/blake3
+          if-no-files-found: error

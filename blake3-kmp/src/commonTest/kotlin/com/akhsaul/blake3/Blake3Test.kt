@@ -6,7 +6,6 @@ import kotlin.test.assertTrue
 
 class Blake3Test {
 
-    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun testEmptyStringHash() {
         val hash = Blake3.hash(ByteArray(0))
@@ -14,7 +13,6 @@ class Blake3Test {
         assertEquals("af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262", hexString)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun testStreamingUpdateMatchesSingleShot() {
         val part1 = "hello ".encodeToByteArray()
@@ -53,5 +51,41 @@ class Blake3Test {
 
         assertEquals(32, keyedResult.size)
         assertTrue(!keyedResult.contentEquals(defaultResult))
+    }
+
+    @Test
+    fun test1MBFileChannelMap() {
+        val size = 1 * 1024 * 1024 // 1 MB
+        val pattern = "BLAKE3_1MB_TEST_DATA_".encodeToByteArray()
+        val inMemoryData = ByteArray(size) { i -> pattern[i % pattern.size] }
+
+        val singleShotHash = Blake3.hash(inMemoryData).toHexString()
+
+        val tempFile = java.io.File.createTempFile("blake3_1mb_test", ".tmp")
+        tempFile.deleteOnExit()
+        try {
+            java.io.RandomAccessFile(tempFile, "rw").use { raf ->
+                raf.write(inMemoryData)
+            }
+
+            val streamingHash = java.io.RandomAccessFile(tempFile, "r").use { raf ->
+                val channel = raf.channel
+                val mappedBuffer = channel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, channel.size())
+                Blake3Hasher().use { hasher ->
+                    val chunkSize = 64 * 1024 // 64 KB
+                    val chunk = ByteArray(chunkSize)
+                    while (mappedBuffer.hasRemaining()) {
+                        val toRead = minOf(chunkSize, mappedBuffer.remaining())
+                        mappedBuffer.get(chunk, 0, toRead)
+                        hasher.update(chunk, 0, toRead)
+                    }
+                    hasher.finalize().toHexString()
+                }
+            }
+
+            assertEquals(singleShotHash, streamingHash)
+        } finally {
+            tempFile.delete()
+        }
     }
 }

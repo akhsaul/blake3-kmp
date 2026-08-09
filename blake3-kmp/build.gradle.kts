@@ -13,6 +13,7 @@ version = "0.1.0"
 
 kotlin {
     jvm {
+        withSourcesJar(false)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
@@ -31,6 +32,7 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
+        withSourcesJar(false)
     }
     applyDefaultHierarchyTemplate()
 

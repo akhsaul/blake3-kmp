@@ -146,7 +146,7 @@ jobs:
           bin/blake3-kmp-test
 
   android-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs:
       - binary-test-distribution
     steps:

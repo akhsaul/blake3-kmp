@@ -34,51 +34,12 @@ kotlin {
     }
     applyDefaultHierarchyTemplate()
 
-//    android {
-//        namespace = "com.akhsaul.blake3"
-//        compileSdk = libs.versions.compileSdk.get().toInt()
-//
-//        defaultConfig {
-//            minSdk = libs.versions.minSdk.get().toInt()
-//            multiDexEnabled = true
-//            testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-//
-//            ndk {
-//                abiFilters += listOf("x86", "x86_64", "armeabi-v7a", "arm64-v8a")
-//            }
-//
-//            externalNativeBuild {
-//                cmake {
-//                    arguments("-DANDROID_TOOLCHAIN=clang", "-DANDROID_STL=c++_static")
-//                    cFlags("-fstrict-aliasing")
-//                    cppFlags("-fstrict-aliasing")
-//                    targets("blake3-kmp")
-//                }
-//            }
-//        }
-//
-//        compileOptions {
-//            sourceCompatibility = JavaVersion.VERSION_11
-//            targetCompatibility = JavaVersion.VERSION_11
-//        }
-//
-//        externalNativeBuild {
-//            cmake {
-//                path = file("src/androidMain/CMakeLists.txt")
-//            }
-//        }
-//    }
     sourceSets {
-        val commonMain by getting
-        val jniMain by creating {
-            dependsOn(commonMain)
+        val jniMain = create("jniMain") {
+            dependsOn(commonMain.get())
         }
-        jvmMain {
-            dependsOn(jniMain)
-        }
-        androidMain {
-            dependsOn(jniMain)
-        }
+        jvmMain.get().dependsOn(jniMain)
+        androidMain.get().dependsOn(jniMain)
         commonTest.dependencies {
             implementation(kotlin("test"))
         }

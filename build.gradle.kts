@@ -15,8 +15,6 @@ buildscript {
 plugins {
     alias(libs.plugins.spotless)
     alias(libs.plugins.kotlin.multiplatform) apply false
-
-    // Add the following
     alias(libs.plugins.android.kotlin.multiplatform.library) apply false
 }
 

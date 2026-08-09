@@ -11,6 +11,12 @@ pub fn build(b: *std.Build) !void {
     try setupTarget(b, &deleteLib.step, .macos, .x86_64, null, "x86_64");
     try setupTarget(b, &deleteLib.step, .windows, .x86_64, null, "amd64");
     try setupTarget(b, &deleteLib.step, .windows, .aarch64, null, "aarch64");
+
+    // --- Android Targets ---
+    try setupTarget(b, &deleteLib.step, .android, .aarch64, null, "arm64-v8a");
+    try setupTarget(b, &deleteLib.step, .android, .arm, .eabi, "armeabi-v7a");
+    try setupTarget(b, &deleteLib.step, .android, .x86_64, null, "x86_64");
+    try setupTarget(b, &deleteLib.step, .android, .x86, null, "x86");
 }
 
 fn setupTarget(

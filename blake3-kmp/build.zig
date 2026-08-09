@@ -96,7 +96,7 @@ fn setupTarget(
                 .flags = &.{},
             });
         }
-    } else if (arch == .aarch64 or arch == .arm) {
+    } else if (arch == .aarch64) {
         lib.addCSourceFiles(.{
             .files = &.{
                 "../BLAKE3/c/blake3_neon.c",

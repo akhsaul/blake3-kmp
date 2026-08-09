@@ -6,7 +6,6 @@ on:
   push:
     branches:
       - 'main'
-      - 'feature/*'
     tags:
       - '**'
 
@@ -29,11 +28,14 @@ jobs:
       - uses: mlugg/setup-zig@v2
         with:
           version: 0.15.2
-          use-cache: false
 
       - run: |
           zig build jvm -p src/jvmMain/resources/jni
           zig build android -p src/androidMain/jniLibs
+        working-directory: blake3-kmp
+
+      - run: |
+          find src/jvmMain/resources/jni -name "*.pdb" -type f -delete
           ls -lRh src/jvmMain/resources/jni
           ls -lRh src/androidMain/jniLibs
         working-directory: blake3-kmp
@@ -179,7 +181,9 @@ jobs:
         if: ${{ always() }}
         with:
           name: test-report-${{ matrix.os }}
-          path: '**/build/reports/tests/**'
+          path: |
+            **/build/reports/tests/**
+            **/build/reports/androidTests/connected/**
           retention-days: 1
 
   final-status:

@@ -18,9 +18,16 @@ plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library) apply false
 }
 
+val envTag = System.getenv("GITHUB_REF_NAME")?.removePrefix("v")
+val libraryVersion = providers.gradleProperty("version")
+    .orNull
+    ?.takeIf { it != "unspecified" }
+    ?: envTag
+    ?: "0.1.0-SNAPSHOT"
+
 allprojects {
     group = "com.akhsaul.blake3"
-    version = "0.1.0"
+    version = libraryVersion
 
     repositories {
         mavenCentral()

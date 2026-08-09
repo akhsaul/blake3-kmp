@@ -8,9 +8,6 @@ plugins {
     id("com.jakewharton.test-distribution")
 }
 
-group = "com.akhsaul.blake3"
-version = "0.1.0"
-
 kotlin {
     jvm {
         withSourcesJar(false)

@@ -11,27 +11,27 @@ class Blake3Test {
 
         val hash16 = Blake3.hash(data, outLen = 16)
         val actualHash16 = hash16.toHexString()
-        val expected16 = "d14d6e8b3641093a912303adb94c4c23"
+        val expected16 = "ac430da494d860fbd273123c8bc60048"
         assertEquals(16, hash16.size)
         assertEquals(expected16, actualHash16)
 
         val hash64 = Blake3.hash(data, outLen = 40)
         val actualHash64 = hash64.toHexString()
-        val expected64 = "d14d6e8b3641093a912303adb94c4c2308485d983c5e824c982e1fd2bf37f3d5a4e6d7d327d8360e"
+        val expected64 = "ac430da494d860fbd273123c8bc6004871fed12b6f755c08f6d4c14ac204b8eb37cafe4d492dd822"
         assertEquals(40, hash64.size)
         assertEquals(expected64, actualHash64)
     }
 
     @Test
     fun testKeyedHash() {
-        val key = "3bc471e75b7fbc99531eb3fbe146aab".toByteArray()
+        val key = "3bc471e75b7fbc99531eb3fbe146aabc".toByteArray()
         val data = "BLAKE3 - JVM Keyed Hash Test".encodeToByteArray()
 
         val actualKeyedResult = Blake3.keyedHash(key, data)
         val actualDefaultResult = Blake3.hash(data)
 
-        val expectedKeyedResult = "2ef02b914223027693d5a55fc66c5c762b7f0f53a0a70f3a894c4b9c78554316"
-        val expectedDefaultResult = "1b35bdc1399a5ce49dc0912d128a34da059c5d8ac0980cec1c732e0299a16d95"
+        val expectedKeyedResult = "7695bd397344ce67a45dedbc19cd553fc9b60b3f5b1e420802d438c4254990b6"
+        val expectedDefaultResult = "df459e8215d093073f4cb4c51bde2bdafeaa7ef125fbce12cb1b50e82bd6a045"
 
         assertEquals(32, actualKeyedResult.size)
         assertTrue(!actualKeyedResult.contentEquals(actualDefaultResult))

@@ -42,6 +42,12 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+        val androidDeviceTest = findByName("androidDeviceTest")
+        androidDeviceTest?.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.androidx.test.runner)
+            implementation(libs.androidx.test.ext.junit)
+        }
     }
 }
 

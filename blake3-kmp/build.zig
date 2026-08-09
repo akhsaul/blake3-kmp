@@ -51,7 +51,9 @@ fn setupTarget(
 
 
     const is_android = if (abi) |a| (a == .android or a == .androideabi) else false;
-    if (!is_android) {
+    if (is_android) {
+        addNdkSysroot(b, lib, arch);
+    } else {
         lib.linkLibC();
     }
     if (tag == .macos or tag == .ios) {
@@ -115,3 +117,39 @@ fn setupTarget(
 
     step.dependOn(&install.step);
 }
+
+fn getNdkPath(b: *std.Build) ?[]const u8 {
+    if (b.graph.env_map.get("ANDROID_NDK_HOME")) |p| if (p.len > 0) return p;
+    if (b.graph.env_map.get("ANDROID_NDK_ROOT")) |p| if (p.len > 0) return p;
+    if (b.graph.env_map.get("ANDROID_NDK_LATEST_HOME")) |p| if (p.len > 0) return p;
+    if (b.graph.env_map.get("ANDROID_NDK")) |p| if (p.len > 0) return p;
+    if (b.graph.env_map.get("ANDROID_HOME")) |p| {
+        if (p.len > 0) return b.fmt("{s}/ndk-bundle", .{p});
+    }
+    return "/usr/local/lib/android/sdk/ndk-bundle";
+}
+
+fn addNdkSysroot(b: *std.Build, lib: *std.Build.Step.Compile, arch: std.Target.Cpu.Arch) void {
+    const ndk = getNdkPath(b) orelse return;
+    const host_tag = switch (std.Target.current.os.tag) {
+        .macos => "darwin-x86_64",
+        .windows => "windows-x86_64",
+        else => "linux-x86_64",
+    };
+    const triple_str = switch (arch) {
+        .aarch64 => "aarch64-linux-android",
+        .arm => "arm-linux-androideabi",
+        .x86_64 => "x86_64-linux-android",
+        .x86 => "i686-linux-android",
+        else => "aarch64-linux-android",
+    };
+
+    // Modern LLVM sysroot layout
+    lib.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/toolchains/llvm/prebuilt/{s}/sysroot/usr/include", .{ ndk, host_tag }) });
+    lib.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/toolchains/llvm/prebuilt/{s}/sysroot/usr/include/{s}", .{ ndk, host_tag, triple_str }) });
+
+    // Direct sysroot layout fallback
+    lib.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/sysroot/usr/include", .{ndk}) });
+    lib.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/sysroot/usr/include/{s}", .{ ndk, triple_str }) });
+}
+

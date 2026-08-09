@@ -12,7 +12,6 @@ import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class Blake3AndroidDeviceTest {
-
     @Test
     fun testAndroidNativeLibraryLoading() {
         val hash = Blake3.hash("Hello Android BLAKE3".encodeToByteArray())
@@ -35,20 +34,21 @@ class Blake3AndroidDeviceTest {
                 raf.write(inMemoryData)
             }
 
-            val streamingHash = RandomAccessFile(tempFile, "r").use { raf ->
-                val channel = raf.channel
-                val mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())
-                Blake3Hasher().use { hasher ->
-                    val chunkSize = 64 * 1024 // 64 KB
-                    val chunk = ByteArray(chunkSize)
-                    while (mappedBuffer.hasRemaining()) {
-                        val toRead = minOf(chunkSize, mappedBuffer.remaining())
-                        mappedBuffer.get(chunk, 0, toRead)
-                        hasher.update(chunk, 0, toRead)
+            val streamingHash =
+                RandomAccessFile(tempFile, "r").use { raf ->
+                    val channel = raf.channel
+                    val mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())
+                    Blake3Hasher().use { hasher ->
+                        val chunkSize = 64 * 1024 // 64 KB
+                        val chunk = ByteArray(chunkSize)
+                        while (mappedBuffer.hasRemaining()) {
+                            val toRead = minOf(chunkSize, mappedBuffer.remaining())
+                            mappedBuffer.get(chunk, 0, toRead)
+                            hasher.update(chunk, 0, toRead)
+                        }
+                        hasher.finalize().toHexString()
                     }
-                    hasher.finalize().toHexString()
                 }
-            }
 
             assertEquals(singleShotHash, streamingHash)
         } finally {

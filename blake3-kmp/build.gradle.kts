@@ -4,16 +4,14 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
     id("com.vanniktech.maven.publish.base")
-    id("binary-compatibility-validator")
-    id("com.jakewharton.test-distribution")
 }
 
 kotlin {
     jvm {
-        withSourcesJar(false)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
+        withSourcesJar(false)
     }
     android {
         namespace = "com.akhsaul.blake3"
@@ -33,10 +31,13 @@ kotlin {
     }
     applyDefaultHierarchyTemplate()
 
+    withSourcesJar(false)
+
     sourceSets {
-        val jniMain = create("jniMain") {
-            dependsOn(commonMain.get())
-        }
+        val jniMain =
+            create("jniMain") {
+                dependsOn(commonMain.get())
+            }
         jvmMain.get().dependsOn(jniMain)
         androidMain.get().dependsOn(jniMain)
         commonTest.dependencies {
@@ -50,10 +51,3 @@ kotlin {
         }
     }
 }
-
-// Disable host-side unit tests. Testing is done with device instrumentation tests.
-//androidComponents {
-//    beforeVariants {
-//        (it as HasUnitTestBuilder).enableUnitTest = false
-//    }
-//}

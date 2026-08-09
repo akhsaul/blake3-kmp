@@ -3,21 +3,19 @@ agp = "9.3.1"
 compileSdk = "37"
 minSdk = "24"
 kotlin = "2.3.21"
+androidx-runner = "1.7.0"
+androidx-junit = "1.3.0"
+maven-publish = "0.37.0"
+spotless = "8.9.0"
 
 [libraries]
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
-androidx-test-runner = { module = "androidx.test:runner", version = "1.7.0" }
-androidx-test-ext-junit = { module = "androidx.test.ext:junit", version = "1.3.0" }
-assertk = "com.willowtreeapps.assertk:assertk:0.28.1"
-binary-compatibility-validator-gradle-plugin = { module = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin", version = "0.18.1" }
-junit = { module = "junit:junit", version = "4.13.2" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-runner" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-junit" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-mavenPublish-gradle-plugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version = "0.37.0" }
-shadowJar-gradle-plugin = { module = "gradle.plugin.com.github.johnrengelman:shadow", version = "8.0.0" }
-testDistributionGradlePlugin = "com.jakewharton.gradle:test-distribution-gradle-plugin:0.3.0"
-ktfmt = "com.facebook:ktfmt:0.64"
+mavenPublish-gradle-plugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "maven-publish" }
 
 [plugins]
-spotless = { id = "com.diffplug.spotless", version = "8.8.0" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }

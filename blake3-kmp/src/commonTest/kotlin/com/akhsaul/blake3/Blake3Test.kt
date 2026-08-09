@@ -5,7 +5,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class Blake3Test {
-
     @Test
     fun testEmptyStringHash() {
         val hash = Blake3.hash(ByteArray(0))
@@ -21,11 +20,12 @@ class Blake3Test {
 
         val singleHash = Blake3.hash(combined).toHexString()
 
-        val streamingHash = Blake3Hasher().use { hasher ->
-            hasher.update(part1)
-            hasher.update(part2)
-            hasher.finalize().toHexString()
-        }
+        val streamingHash =
+            Blake3Hasher().use { hasher ->
+                hasher.update(part1)
+                hasher.update(part2)
+                hasher.finalize().toHexString()
+            }
 
         assertEquals(singleHash, streamingHash)
     }
@@ -68,20 +68,21 @@ class Blake3Test {
                 raf.write(inMemoryData)
             }
 
-            val streamingHash = java.io.RandomAccessFile(tempFile, "r").use { raf ->
-                val channel = raf.channel
-                val mappedBuffer = channel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, channel.size())
-                Blake3Hasher().use { hasher ->
-                    val chunkSize = 64 * 1024 // 64 KB
-                    val chunk = ByteArray(chunkSize)
-                    while (mappedBuffer.hasRemaining()) {
-                        val toRead = minOf(chunkSize, mappedBuffer.remaining())
-                        mappedBuffer.get(chunk, 0, toRead)
-                        hasher.update(chunk, 0, toRead)
+            val streamingHash =
+                java.io.RandomAccessFile(tempFile, "r").use { raf ->
+                    val channel = raf.channel
+                    val mappedBuffer = channel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, channel.size())
+                    Blake3Hasher().use { hasher ->
+                        val chunkSize = 64 * 1024 // 64 KB
+                        val chunk = ByteArray(chunkSize)
+                        while (mappedBuffer.hasRemaining()) {
+                            val toRead = minOf(chunkSize, mappedBuffer.remaining())
+                            mappedBuffer.get(chunk, 0, toRead)
+                            hasher.update(chunk, 0, toRead)
+                        }
+                        hasher.finalize().toHexString()
                     }
-                    hasher.finalize().toHexString()
                 }
-            }
 
             assertEquals(singleShotHash, streamingHash)
         } finally {

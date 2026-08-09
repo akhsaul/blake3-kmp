@@ -18,14 +18,22 @@ public actual class Blake3Hasher : AutoCloseable {
         check(hasherPtr != 0L) { "Failed to allocate native BLAKE3 keyed hasher" }
     }
 
-    public actual fun update(input: ByteArray, offset: Int, length: Int) {
+    public actual fun update(
+        input: ByteArray,
+        offset: Int,
+        length: Int,
+    ) {
         if (length <= 0) return
         require(offset >= 0 && offset + length <= input.size) { "Index out of bounds" }
         check(hasherPtr != 0L) { "Blake3Hasher has been closed" }
         hasherUpdate(hasherPtr, input, offset, length)
     }
 
-    public actual fun finalize(out: ByteArray, offset: Int, length: Int) {
+    public actual fun finalize(
+        out: ByteArray,
+        offset: Int,
+        length: Int,
+    ) {
         if (length <= 0) return
         require(offset >= 0 && offset + length <= out.size) { "Index out of bounds" }
         check(hasherPtr != 0L) { "Blake3Hasher has been closed" }

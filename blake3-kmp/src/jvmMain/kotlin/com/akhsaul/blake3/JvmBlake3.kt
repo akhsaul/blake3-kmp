@@ -14,21 +14,24 @@ internal actual fun loadNativeLibrary() {
     val osName = System.getProperty("os.name").lowercase(US)
     val osArch = System.getProperty("os.arch").lowercase(US)
 
-    val libName = when {
-        osName.contains("windows") -> "blake3-kmp.dll"
-        osName.contains("linux") -> "libblake3-kmp.so"
-        osName.contains("mac") -> "libblake3-kmp.dylib"
-        else -> error("Unsupported OS: $osName (arch=$osArch)")
-    }
+    val libName =
+        when {
+            osName.contains("windows") -> "blake3-kmp.dll"
+            osName.contains("linux") -> "libblake3-kmp.so"
+            osName.contains("mac") -> "libblake3-kmp.dylib"
+            else -> error("Unsupported OS: $osName (arch=$osArch)")
+        }
 
-    val candidates = listOf(
-        "/jni/$osArch/$libName",
-        if (osArch == "amd64") "/jni/x86_64/$libName" else "/jni/amd64/$libName"
-    )
+    val candidates =
+        listOf(
+            "/jni/$osArch/$libName",
+            if (osArch == "amd64") "/jni/x86_64/$libName" else "/jni/amd64/$libName",
+        )
 
-    val inputStream = candidates.firstNotNullOfOrNull { path ->
-        Blake3Hasher::class.java.getResourceAsStream(path)
-    }
+    val inputStream =
+        candidates.firstNotNullOfOrNull { path ->
+            Blake3Hasher::class.java.getResourceAsStream(path)
+        }
 
     if (inputStream == null) {
         try {

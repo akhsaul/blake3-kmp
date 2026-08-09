@@ -5,10 +5,7 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath(libs.binary.compatibility.validator.gradle.plugin)
         classpath(libs.mavenPublish.gradle.plugin)
-        classpath(libs.shadowJar.gradle.plugin)
-        classpath(libs.testDistributionGradlePlugin)
     }
 }
 
@@ -19,11 +16,12 @@ plugins {
 }
 
 val envTag = System.getenv("GITHUB_REF_NAME")?.removePrefix("v")
-val libraryVersion = providers.gradleProperty("version")
-    .orNull
-    ?.takeIf { it != "unspecified" }
-    ?: envTag
-    ?: "0.1.0-SNAPSHOT"
+val libraryVersion =
+    providers.gradleProperty("version")
+        .orNull
+        ?.takeIf { it != "unspecified" }
+        ?: envTag
+        ?: "0.1.0-SNAPSHOT"
 
 allprojects {
     group = "com.akhsaul.blake3"
@@ -32,5 +30,18 @@ allprojects {
     repositories {
         mavenCentral()
         google()
+    }
+}
+
+spotless {
+    kotlin {
+        target("**/*.kt")
+        targetExclude("**/build/**")
+        ktlint("1.8.0")
+    }
+    kotlinGradle {
+        target("**/*.kts")
+        targetExclude("**/build/**")
+        ktlint("1.8.0")
     }
 }

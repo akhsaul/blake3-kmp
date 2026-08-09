@@ -58,7 +58,6 @@ fn setupTarget(
     const is_android = if (abi) |a| (a == .android or a == .androideabi) else false;
     if (is_android) {
         addNdkSysroot(b, lib, arch);
-        lib.linkSystemLibrary("c");
     } else {
         lib.linkLibC();
     }

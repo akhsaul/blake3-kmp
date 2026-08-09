@@ -19,6 +19,14 @@
 #include <string.h>
 #include "blake3.h"
 
+#if defined(__ANDROID__) || defined(ANDROID)
+size_t strlen(const char *s) {
+    const char *p = s;
+    while (p && *p) p++;
+    return (size_t)(p - s);
+}
+#endif
+
 JNIEXPORT jlong JNICALL
 Java_com_akhsaul_blake3_JniBlake3Kt_createHasher(JNIEnv* env, jclass clazz) {
     blake3_hasher* hasher = (blake3_hasher*) malloc(sizeof(blake3_hasher));

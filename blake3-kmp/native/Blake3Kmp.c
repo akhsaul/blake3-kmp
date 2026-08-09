@@ -20,10 +20,28 @@
 #include "blake3.h"
 
 #if defined(__ANDROID__) || defined(ANDROID)
+#include <sys/mman.h>
+
 size_t strlen(const char *s) {
     const char *p = s;
     while (p && *p) p++;
     return (size_t)(p - s);
+}
+
+void* malloc(size_t size) {
+    if (size == 0) return NULL;
+    size_t total_size = size + sizeof(size_t);
+    void* ptr = mmap(NULL, total_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (ptr == MAP_FAILED) return NULL;
+    *(size_t*)ptr = total_size;
+    return (void*)((char*)ptr + sizeof(size_t));
+}
+
+void free(void* ptr) {
+    if (ptr == NULL) return;
+    void* real_ptr = (void*)((char*)ptr - sizeof(size_t));
+    size_t total_size = *(size_t*)real_ptr;
+    munmap(real_ptr, total_size);
 }
 #endif
 

@@ -146,7 +146,7 @@ jobs:
           bin/blake3-kmp-test
 
   android-test:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     needs:
       - binary-test-distribution
     steps:
@@ -164,6 +164,9 @@ jobs:
           name: blake3-kmp-android-binary
           path: blake3-kmp/src/androidMain/jniLibs
 
+      - run: ls -lRh src/androidMain/jniLibs
+        working-directory: blake3-kmp
+
       - name: Enable KVM (for Android test)
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -174,7 +177,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
-          arch: arm64-v8a
+          arch: x86_64
           emulator-boot-timeout: 20000
           script: ./gradlew assembleAndroidTest connectedAndroidDeviceTest
 

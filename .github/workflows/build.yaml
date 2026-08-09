@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: '25'
+          java-version: '21'
 
       - uses: mlugg/setup-zig@v2
         with:
@@ -35,12 +35,19 @@ jobs:
           zig build -p src/jvmMain/resources/jni
           zig build -p src/androidMain/jniLibs
           ls -la src/jvmMain/resources/jni
+          ls -la src/androidMain/jniLibs
         working-directory: blake3-kmp
 
       - uses: actions/upload-artifact@v7
         with:
-          name: blake3-kmp-native-tests
+          name: blake3-kmp-jvm-binary
           path: blake3-kmp/src/jvmMain/resources/jni
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: blake3-kmp-android-binary
+          path: blake3-kmp/src/androidMain/jniLibs
           if-no-files-found: error
 
   static-checks:
@@ -55,7 +62,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: '25'
+          java-version: '21'
 
       - name: Ensure Android SDK location property
         run: |
@@ -91,7 +98,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: '25'
+          java-version: '21'
 
       - run: ./gradlew :blake3-kmp:installJvmTestDistribution
 
@@ -132,7 +139,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: '25'
+          java-version: '21'
 
       - uses: actions/download-artifact@v7
         with:
@@ -167,7 +174,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: '25'
+          java-version: '21'
 
       - uses: mlugg/setup-zig@v2
         with:
@@ -220,7 +227,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: '25'
+          java-version: '21'
 
       - uses: mlugg/setup-zig@v2
         with:

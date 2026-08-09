@@ -173,7 +173,7 @@ jobs:
         with:
           api-level: 29
           emulator-boot-timeout: 20000
-          script: ./gradlew assembleAndroidTest connectedCheck
+          script: ./gradlew assembleAndroidTest connectedAndroidTest
 
       - uses: actions/upload-artifact@v7
         if: ${{ always() }}

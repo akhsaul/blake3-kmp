@@ -156,8 +156,13 @@ fn addNdkSysroot(b: *std.Build, lib: *std.Build.Step.Compile, arch: std.Target.C
     };
 
     // Modern LLVM sysroot layout
-    lib.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/toolchains/llvm/prebuilt/{s}/sysroot/usr/include", .{ ndk, host_tag }) });
-    lib.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/toolchains/llvm/prebuilt/{s}/sysroot/usr/include/{s}", .{ ndk, host_tag, triple_str }) });
+    const sysroot = b.fmt("{s}/toolchains/llvm/prebuilt/{s}/sysroot", .{ ndk, host_tag });
+    lib.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/usr/include", .{sysroot}) });
+    lib.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/usr/include/{s}", .{ sysroot, triple_str }) });
+
+    // NDK Library paths for dynamic linker
+    lib.addLibraryPath(.{ .cwd_relative = b.fmt("{s}/usr/lib/{s}/24", .{ sysroot, triple_str }) });
+    lib.addLibraryPath(.{ .cwd_relative = b.fmt("{s}/usr/lib/{s}", .{ sysroot, triple_str }) });
 
     // Direct sysroot layout fallback
     lib.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/sysroot/usr/include", .{ndk}) });

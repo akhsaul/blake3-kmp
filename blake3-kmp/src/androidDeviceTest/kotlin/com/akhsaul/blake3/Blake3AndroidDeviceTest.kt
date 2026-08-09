@@ -48,15 +48,26 @@ class Blake3AndroidDeviceTest {
 
     @Test
     fun testAndroidPrecomputed2MBBinaryFileChecksum() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val checksumStream = context.assets.open("bin/test.bin.blake3")
+        val testContext = InstrumentationRegistry.getInstrumentation().context
+        val targetContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val checksumStream =
+            try {
+                testContext.assets.open("bin/test.bin.blake3")
+            } catch (_: Exception) {
+                targetContext.assets.open("bin/test.bin.blake3")
+            }
         val expectedChecksum =
             checksumStream.bufferedReader().use { reader ->
                 reader.readLine()?.substringBefore(' ')?.trim()
             } ?: error("Failed to read checksum from assets")
 
-        val inputStream = context.assets.open("bin/test.bin")
-        val tempFile = File(context.cacheDir, "blake3_android_2mb.tmp")
+        val inputStream =
+            try {
+                testContext.assets.open("bin/test.bin")
+            } catch (_: Exception) {
+                targetContext.assets.open("bin/test.bin")
+            }
+        val tempFile = File(targetContext.cacheDir, "blake3_android_2mb.tmp")
         try {
             tempFile.outputStream().use { out ->
                 inputStream.copyTo(out)

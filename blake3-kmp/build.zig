@@ -100,6 +100,11 @@ fn setupTarget(
                 .flags = &.{},
             });
         }
+    } else if (arch == .x86) {
+        lib.root_module.addCMacro("BLAKE3_NO_SSE2", "1");
+        lib.root_module.addCMacro("BLAKE3_NO_SSE41", "1");
+        lib.root_module.addCMacro("BLAKE3_NO_AVX2", "1");
+        lib.root_module.addCMacro("BLAKE3_NO_AVX512", "1");
     } else if (arch == .aarch64) {
         lib.addCSourceFiles(.{
             .files = &.{

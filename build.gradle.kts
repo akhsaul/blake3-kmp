@@ -17,7 +17,8 @@ plugins {
 
 val envTag = System.getenv("GITHUB_REF_NAME")?.removePrefix("v")
 val libraryVersion =
-    providers.gradleProperty("version")
+    providers
+        .gradleProperty("version")
         .orNull
         ?.takeIf { it != "unspecified" }
         ?: envTag

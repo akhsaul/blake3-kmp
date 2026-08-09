@@ -42,7 +42,6 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
-        findByName("androidDeviceTest")?.dependsOn(commonTest.get())
     }
 }
 

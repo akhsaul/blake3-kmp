@@ -85,7 +85,7 @@ jobs:
           fi
 
       - name: Static checks
-        run: ./gradlew spotlessCheck check -x testAndroid -x testAndroidHostTest -x jvmTest -x androidConnectedCheck
+        run: ./gradlew spotlessCheck check -x testAndroid -x testAndroidHostTest -x jvmTest -x androidConnectedCheck -x test
 
   binary-test-distribution:
     runs-on: ubuntu-latest

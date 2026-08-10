@@ -151,14 +151,14 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: macOS-15
-            api-level: '27'
-            system-images: default
-            arch: arm64-v8a
           - os: ubuntu-latest
             api-level: '27'
             system-images: default
             arch: x86
+          - os: macOS-15
+            api-level: '27'
+            system-images: default
+            arch: arm64-v8a
           - os: ubuntu-latest
             api-level: '36'
             system-images: google_apis_ps16k
@@ -211,7 +211,6 @@ jobs:
           arch: ${{ matrix.arch }}
           emulator-boot-timeout: 1800
           force-avd-creation: false
-          emulator-options: -no-window -gpu auto -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: echo "Generated AVD snapshot for caching."
 
@@ -223,7 +222,7 @@ jobs:
           arch: ${{ matrix.arch }}
           emulator-boot-timeout: 1800
           force-avd-creation: false
-          emulator-options: -no-snapshot-save -no-window -gpu auto -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-snapshot-save
           disable-animations: true
           script: ./gradlew assembleAndroidTest connectedAndroidDeviceTest
 

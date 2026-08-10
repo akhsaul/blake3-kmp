@@ -280,7 +280,7 @@ jobs:
       - jvm-platform-test
       - android-test
       - static-checks
-    if: github.ref_type == 'tag' && !cancelled()
+    if: ${{ !cancelled() }}
     permissions:
       contents: write
     runs-on: ubuntu-latest

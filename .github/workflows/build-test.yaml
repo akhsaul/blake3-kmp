@@ -10,7 +10,7 @@ on:
 env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
   ZIG_VERSION: "0.16.0"
-  JDK_VERSION: "21"
+  JDK_VERSION: "25"
   JDK_VENDOR: "zulu"
 
 jobs:

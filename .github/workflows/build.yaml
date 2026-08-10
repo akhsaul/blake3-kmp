@@ -111,7 +111,7 @@ jobs:
     needs:
       - binary-test-distribution
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         platform:
           - os: macOS-15-intel
@@ -148,19 +148,24 @@ jobs:
     needs:
       - binary-test-distribution
     strategy:
+      fail-fast: true
       matrix:
         include:
           - os: ubuntu-latest
             api-level: 27
+            system-images: default
             arch: x86
           - os: ubuntu-latest
-            api-level: 37
+            api-level: 37.0
+            system-images: google_apis_ps16k
             arch: x86_64
           - os: macOS-15
             api-level: 27
+            system-images: default
             arch: arm64-v8a
           - os: macOS-15
-            api-level: 37
+            api-level: 37.0
+            system-images: google_apis_ps16k
             arch: arm64-v8a
     runs-on: ${{ matrix.os }}
     steps:
@@ -195,13 +200,14 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ matrix.api-level }}
+          key: avd-${{ matrix.api-level }}-${{ matrix.system-images }}-${{ matrix.arch }}
 
       - name: create AVD and generate snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.system-images }}
           arch: ${{ matrix.arch }}
           emulator-boot-timeout: 20000
           force-avd-creation: false
@@ -213,6 +219,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.system-images }}
           arch: ${{ matrix.arch }}
           emulator-boot-timeout: 20000
           force-avd-creation: false
@@ -233,8 +240,10 @@ jobs:
       - jvm-platform-test
       - android-test
       - static-checks
-    runs-on: ubuntu-latest
     if: always() && !cancelled()
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
     steps:
       - name: Check
         run: |
@@ -245,7 +254,7 @@ jobs:
           fi
 
       - uses: actions/checkout@v7
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.ref_type == 'tag'
         with:
           submodules: true
 
@@ -264,10 +273,22 @@ jobs:
           name: blake3-kmp-android-binary
           path: blake3-kmp/src/androidMain/jniLibs
 
-      - run: ./gradlew publishToMavenLocal
+      - name: generate library to maven local
+        run: ./gradlew publishToMavenLocal
 
       - uses: actions/upload-artifact@v7
         with:
           name: blake3-kmp-published-library
           path: ~/.m2/repository/com/akhsaul/blake3
           if-no-files-found: error
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v3
+        if: github.ref_type == 'tag'
+        with:
+          generate_release_notes: true
+          files: |
+            ~/.m2/repository/com/akhsaul/blake3/**/*.jar
+            ~/.m2/repository/com/akhsaul/blake3/**/*.aar
+            ~/.m2/repository/com/akhsaul/blake3/**/*.pom
+            ~/.m2/repository/com/akhsaul/blake3/**/*.module

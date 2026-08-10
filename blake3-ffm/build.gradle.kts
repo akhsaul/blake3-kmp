@@ -28,6 +28,10 @@ tasks.withType<Test>().configureEach {
     jvmArgs("--enable-native-access=ALL-UNNAMED")
 }
 
+tasks.named<Jar>("jarTest") {
+    from(sourceSets["test"].output)
+}
+
 mavenPublishing {
     configure(
         KotlinJvm(

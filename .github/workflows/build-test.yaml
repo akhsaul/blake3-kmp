@@ -175,4 +175,4 @@ jobs:
           bin/blake3-kmp-test
 
           chmod +x bin/blake3-ffm-test || true
-          bin/blake3-ffm-test
+          JAVA_OPTS="--enable-native-access=ALL-UNNAMED" bin/blake3-ffm-test

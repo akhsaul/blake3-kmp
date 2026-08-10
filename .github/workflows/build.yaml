@@ -159,7 +159,7 @@ jobs:
             api-level: '36' # 37.0 still has bug (adb can't connect) for reactivecircus/android-emulator-runner@v2
             system-images: google_apis_ps16k
             arch: x86_64
-          - os: macos-latest
+          - os: ubuntu-24.04-arm
             api-level: '36' # 37.0 still has bug (adb can't connect) for reactivecircus/android-emulator-runner@v2
             system-images: google_apis_ps16k
             arch: arm64-v8a
@@ -187,7 +187,8 @@ jobs:
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
+          # kvm is not available on linux arm
+          sudo udevadm trigger --name-match=kvm || true
 
       - name: AVD cache
         uses: actions/cache@v6
@@ -206,6 +207,7 @@ jobs:
           target: ${{ matrix.system-images }}
           arch: ${{ matrix.arch }}
           force-avd-creation: false
+          emulator-boot-timeout: 300
           emulator-options: -no-window -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: echo "Generated AVD snapshot for caching."
@@ -217,6 +219,7 @@ jobs:
           target: ${{ matrix.system-images }}
           arch: ${{ matrix.arch }}
           force-avd-creation: false
+          emulator-boot-timeout: 300
           emulator-options: -no-snapshot-save -no-window -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: ./gradlew assembleAndroidTest connectedAndroidDeviceTest

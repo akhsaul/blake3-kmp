@@ -201,8 +201,8 @@ jobs:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.system-images }}
           arch: ${{ matrix.arch }}
-          emulator-boot-timeout: 1800
           force-avd-creation: false
+          emulator-options: -noaudio -no-window -no-boot-anim -camera-back none
           disable-animations: true
           script: echo "Generated AVD snapshot for caching."
 
@@ -212,9 +212,8 @@ jobs:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.system-images }}
           arch: ${{ matrix.arch }}
-          emulator-boot-timeout: 1800
           force-avd-creation: false
-          emulator-options: -no-snapshot-save
+          emulator-options: -no-snapshot-save -no-window -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: ./gradlew assembleAndroidTest connectedAndroidDeviceTest
 

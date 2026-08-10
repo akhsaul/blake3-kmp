@@ -2,22 +2,24 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 pub fn build(b: *std.Build) void {
+    const ndk_opt = b.option([]const u8, "ndk", "Path to Android NDK");
     const jvm_step = b.step("jvm", "Build JVM Desktop targets");
     const android_step = b.step("android", "Build Android targets");
 
     // --- Desktop Targets ---
-    setupTarget(b, jvm_step, .linux, .aarch64, .gnu, "aarch64");
-    setupTarget(b, jvm_step, .linux, .x86_64, .gnu, "amd64");
-    setupTarget(b, jvm_step, .macos, .aarch64, null, "aarch64");
-    setupTarget(b, jvm_step, .macos, .x86_64, null, "x86_64");
-    setupTarget(b, jvm_step, .windows, .x86_64, null, "amd64");
-    setupTarget(b, jvm_step, .windows, .aarch64, null, "aarch64");
+    setupTarget(b, jvm_step, .linux, .aarch64, .gnu, "aarch64", null);
+    setupTarget(b, jvm_step, .linux, .x86_64, .gnu, "amd64", null);
+    setupTarget(b, jvm_step, .macos, .aarch64, null, "aarch64", null);
+    setupTarget(b, jvm_step, .macos, .x86_64, null, "x86_64", null);
+    setupTarget(b, jvm_step, .windows, .x86_64, null, "amd64", null);
+    setupTarget(b, jvm_step, .windows, .aarch64, null, "aarch64", null);
 
     // --- Android Targets ---
-    setupTarget(b, android_step, .linux, .aarch64, .android, "arm64-v8a");
-    setupTarget(b, android_step, .linux, .arm, .androideabi, "armeabi-v7a");
-    setupTarget(b, android_step, .linux, .x86_64, .android, "x86_64");
-    setupTarget(b, android_step, .linux, .x86, .android, "x86");
+    const ndk_path = getNdkPath(b, ndk_opt);
+    setupTarget(b, android_step, .linux, .aarch64, .android, "arm64-v8a", ndk_path);
+    setupTarget(b, android_step, .linux, .arm, .androideabi, "armeabi-v7a", ndk_path);
+    setupTarget(b, android_step, .linux, .x86_64, .android, "x86_64", ndk_path);
+    setupTarget(b, android_step, .linux, .x86, .android, "x86", ndk_path);
 }
 
 fn setupTarget(
@@ -27,6 +29,7 @@ fn setupTarget(
     arch: std.Target.Cpu.Arch,
     abi: ?std.Target.Abi,
     dir: []const u8,
+    ndk_path: ?[]const u8,
 ) void {
     const mod = b.createModule(.{
         .target = b.resolveTargetQuery(.{
@@ -48,7 +51,7 @@ fn setupTarget(
 
     const is_android = if (abi) |a| (a == .android or a == .androideabi) else false;
     if (is_android) {
-        addNdkSysroot(b, mod, arch);
+        addNdkSysroot(b, mod, arch, ndk_path);
     } else {
         mod.link_libc = true;
     }
@@ -124,13 +127,20 @@ fn setupTarget(
     group_step.dependOn(&install.step);
 }
 
-fn getNdkPath(b: *std.Build) ?[]const u8 {
-    _ = b;
-    return "/mnt/Data/SDK/android-home-linux/ndk/28.2.13676358";
+fn getNdkPath(b: *std.Build, ndk_opt: ?[]const u8) ?[]const u8 {
+    if (ndk_opt) |p| if (p.len > 0) return p;
+    if (b.graph.environ_map.get("ANDROID_NDK_HOME")) |p| if (p.len > 0) return p;
+    if (b.graph.environ_map.get("ANDROID_NDK_ROOT")) |p| if (p.len > 0) return p;
+    if (b.graph.environ_map.get("ANDROID_NDK_LATEST_HOME")) |p| if (p.len > 0) return p;
+    if (b.graph.environ_map.get("ANDROID_NDK")) |p| if (p.len > 0) return p;
+    if (b.graph.environ_map.get("ANDROID_HOME")) |p| {
+        if (p.len > 0) return b.fmt("{s}/ndk-bundle", .{p});
+    }
+    return "/usr/local/lib/android/sdk/ndk-bundle";
 }
 
-fn addNdkSysroot(b: *std.Build, mod: *std.Build.Module, arch: std.Target.Cpu.Arch) void {
-    const ndk = getNdkPath(b) orelse return;
+fn addNdkSysroot(b: *std.Build, mod: *std.Build.Module, arch: std.Target.Cpu.Arch, ndk_path: ?[]const u8) void {
+    const ndk = ndk_path orelse return;
     const host_tag = switch (builtin.os.tag) {
         .macos => "darwin-x86_64",
         .windows => "windows-x86_64",

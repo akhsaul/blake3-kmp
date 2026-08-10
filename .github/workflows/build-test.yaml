@@ -63,6 +63,12 @@ jobs:
           path: blake3-kmp/src/androidMain/jniLibs
           if-no-files-found: error
 
+      - uses: actions/upload-artifact@v7
+        with:
+          name: blake3-ffm-jvm-binary
+          path: blake3-ffm/src/main/resources/jni
+          if-no-files-found: error
+
   static-checks:
     runs-on: ubuntu-latest
     steps:
@@ -106,6 +112,11 @@ jobs:
           name: blake3-kmp-jvm-binary
           path: blake3-kmp/src/jvmMain/resources/jni
 
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-ffm-jvm-binary
+          path: blake3-ffm/src/main/resources/jni
+
       - uses: actions/setup-java@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -114,12 +125,20 @@ jobs:
           java-version: ${{ env.JDK_VERSION }}
 
       - name: package jvm test as archive for later use
-        run: ./gradlew :blake3-kmp:installJvmTestDistribution
+        run: |
+          ./gradlew :blake3-kmp:installJvmTestDistribution
+          ./gradlew :blake3-ffm:installTestDistribution
 
       - uses: actions/upload-artifact@v7
         with:
           name: blake3-kmp-binary-tests
           path: blake3-kmp/build/install/jvmTest
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: blake3-ffm-binary-tests
+          path: blake3-ffm/build/install/test
           if-no-files-found: error
 
   jvm-light-test:
@@ -146,7 +165,14 @@ jobs:
         with:
           name: blake3-kmp-binary-tests
 
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-ffm-binary-tests
+
       - name: Run JVM tests
         run: |
           chmod +x bin/blake3-kmp-test || true
           bin/blake3-kmp-test
+
+          chmod +x bin/blake3-ffm-test || true
+          bin/blake3-ffm-test

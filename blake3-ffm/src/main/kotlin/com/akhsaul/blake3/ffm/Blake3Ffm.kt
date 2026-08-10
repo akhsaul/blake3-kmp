@@ -149,14 +149,9 @@ object Blake3Ffm {
         format: HexFormat = HexFormat.Default,
     ): String = keyedHash(key, data, outLen).toHexString(format)
 
+    @OptIn(ExperimentalStdlibApi::class)
     private fun ByteArray.toHexString(format: HexFormat): String {
-        val hexChars = CharArray(size * 2)
-        val digits = if (format.bytes.isUpperCase) "0123456789ABCDEF" else "0123456789abcdef"
-        for (i in indices) {
-            val v = this[i].toInt() and 0xFF
-            hexChars[i * 2] = digits[v ushr 4]
-            hexChars[i * 2 + 1] = digits[v and 0x0F]
-        }
-        return String(hexChars)
+        return this.toHexString(format)
     }
 }
+

@@ -79,3 +79,6 @@ mavenPublishing {
 dependencies {
     testImplementation(kotlin("test"))
 }
+repositories {
+    mavenCentral()
+}

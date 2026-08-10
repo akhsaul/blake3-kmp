@@ -19,6 +19,10 @@
 #include <string.h>
 #include "blake3.h"
 
+BLAKE3_API size_t blake3_hasher_sizeof(void) {
+    return sizeof(blake3_hasher);
+}
+
 JNIEXPORT jlong JNICALL
 Java_com_akhsaul_blake3_JniBlake3Kt_createHasher(JNIEnv* env, jclass clazz) {
     blake3_hasher* hasher = (blake3_hasher*) malloc(sizeof(blake3_hasher));

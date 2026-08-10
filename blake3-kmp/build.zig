@@ -49,6 +49,9 @@ fn setupTarget(
     );
     mod.addIncludePath(b.path("../BLAKE3/c"));
 
+    mod.addCMacro("BLAKE3_DLL", "1");
+    mod.addCMacro("BLAKE3_DLL_EXPORTS", "1");
+
     const is_android = if (abi) |a| (a == .android or a == .androideabi) else false;
     if (is_android) {
         addNdkSysroot(b, mod, arch, ndk_path);

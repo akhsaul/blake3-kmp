@@ -159,7 +159,7 @@ jobs:
             api-level: '36' # 37.0 still has bug (adb can't connect) for reactivecircus/android-emulator-runner@v2
             system-images: google_apis_ps16k
             arch: x86_64
-          - os: ubuntu-24.04-arm
+          - os: macos-latest
             api-level: '36' # 37.0 still has bug (adb can't connect) for reactivecircus/android-emulator-runner@v2
             system-images: google_apis_ps16k
             arch: arm64-v8a

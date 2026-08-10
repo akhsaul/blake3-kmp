@@ -39,12 +39,10 @@ class Blake3StreamFfm : AutoCloseable {
         val segment = hasherSegment ?: error("Blake3StreamFfm is closed")
 
         val tempArena = Arena.ofConfined()
-        try {
+        tempArena.use { tempArena ->
             val inputSegment = tempArena.allocate(length.toLong())
             MemorySegment.copy(input, offset, inputSegment, ValueLayout.JAVA_BYTE, 0L, length)
             Blake3Ffm.blake3_hasher_update_handle.invokeExact(segment, inputSegment, length.toLong())
-        } finally {
-            tempArena.close()
         }
     }
 
@@ -58,12 +56,10 @@ class Blake3StreamFfm : AutoCloseable {
         val segment = hasherSegment ?: error("Blake3StreamFfm is closed")
 
         val tempArena = Arena.ofConfined()
-        try {
+        tempArena.use { tempArena ->
             val outputSegment = tempArena.allocate(length.toLong())
             Blake3Ffm.blake3_hasher_finalize_handle.invokeExact(segment, outputSegment, length.toLong())
             MemorySegment.copy(outputSegment, ValueLayout.JAVA_BYTE, 0L, out, offset, length)
-        } finally {
-            tempArena.close()
         }
     }
 
@@ -85,7 +81,8 @@ class Blake3StreamFfm : AutoCloseable {
             arena = null
             try {
                 currentArena.close()
-            } catch (_: Throwable) {}
+            } catch (_: Throwable) {
+            }
         }
     }
 }

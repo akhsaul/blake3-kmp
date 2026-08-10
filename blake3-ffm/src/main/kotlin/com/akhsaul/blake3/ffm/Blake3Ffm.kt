@@ -20,50 +20,51 @@ object Blake3Ffm {
         SymbolLookup.loaderLookup()
     }
 
-    private fun findSymbol(name: String): MemorySegment {
-        return lookup.find(name).orElseGet {
+    private fun findSymbol(name: String): MemorySegment =
+        lookup.find(name).orElseGet {
             throw UnsatisfiedLinkError("Failed to find native symbol: $name")
         }
-    }
 
     private val blake3_hasher_sizeof_handle: MethodHandle? by lazy {
-        lookup.find("blake3_hasher_sizeof").map {
-            linker.downcallHandle(it, FunctionDescriptor.of(ValueLayout.JAVA_LONG))
-        }.orElse(null)
+        lookup
+            .find("blake3_hasher_sizeof")
+            .map {
+                linker.downcallHandle(it, FunctionDescriptor.of(ValueLayout.JAVA_LONG))
+            }.orElse(null)
     }
 
     internal val blake3_hasher_init_handle: MethodHandle by lazy {
         linker.downcallHandle(
             findSymbol("blake3_hasher_init"),
-            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS)
+            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS),
         )
     }
 
     internal val blake3_hasher_init_keyed_handle: MethodHandle by lazy {
         linker.downcallHandle(
             findSymbol("blake3_hasher_init_keyed"),
-            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS),
         )
     }
 
     internal val blake3_hasher_update_handle: MethodHandle by lazy {
         linker.downcallHandle(
             findSymbol("blake3_hasher_update"),
-            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG),
         )
     }
 
     internal val blake3_hasher_finalize_handle: MethodHandle by lazy {
         linker.downcallHandle(
             findSymbol("blake3_hasher_finalize"),
-            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG),
         )
     }
 
     internal val blake3_hasher_reset_handle: MethodHandle by lazy {
         linker.downcallHandle(
             findSymbol("blake3_hasher_reset"),
-            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS)
+            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS),
         )
     }
 
@@ -87,7 +88,7 @@ object Blake3Ffm {
         require(outLen > 0) { "Output length must be positive" }
         val result = ByteArray(outLen)
         val arena = Arena.ofConfined()
-        try {
+        arena.use { arena ->
             val hasherSegment = arena.allocate(hasherSize)
             blake3_hasher_init_handle.invokeExact(hasherSegment)
 
@@ -100,8 +101,6 @@ object Blake3Ffm {
             val outputSegment = arena.allocate(outLen.toLong())
             blake3_hasher_finalize_handle.invokeExact(hasherSegment, outputSegment, outLen.toLong())
             MemorySegment.copy(outputSegment, ValueLayout.JAVA_BYTE, 0L, result, 0, outLen)
-        } finally {
-            arena.close()
         }
         return result
     }
@@ -121,7 +120,7 @@ object Blake3Ffm {
         require(outLen > 0) { "Output length must be positive" }
         val result = ByteArray(outLen)
         val arena = Arena.ofConfined()
-        try {
+        arena.use { arena ->
             val hasherSegment = arena.allocate(hasherSize)
             val keySegment = arena.allocate(32L)
             MemorySegment.copy(key, 0, keySegment, ValueLayout.JAVA_BYTE, 0L, 32)
@@ -136,8 +135,6 @@ object Blake3Ffm {
             val outputSegment = arena.allocate(outLen.toLong())
             blake3_hasher_finalize_handle.invokeExact(hasherSegment, outputSegment, outLen.toLong())
             MemorySegment.copy(outputSegment, ValueLayout.JAVA_BYTE, 0L, result, 0, outLen)
-        } finally {
-            arena.close()
         }
         return result
     }
@@ -148,10 +145,4 @@ object Blake3Ffm {
         outLen: Int = OUT_LEN,
         format: HexFormat = HexFormat.Default,
     ): String = keyedHash(key, data, outLen).toHexString(format)
-
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun ByteArray.toHexString(format: HexFormat): String {
-        return this.toHexString(format)
-    }
 }
-

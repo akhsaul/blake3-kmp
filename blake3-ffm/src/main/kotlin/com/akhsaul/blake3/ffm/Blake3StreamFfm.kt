@@ -43,6 +43,7 @@ class Blake3StreamFfm : AutoCloseable {
             val inputSegment = tempArena.allocate(length.toLong())
             MemorySegment.copy(input, offset, inputSegment, ValueLayout.JAVA_BYTE, 0L, length)
             Blake3Ffm.blake3_hasher_update_handle.invokeExact(segment, inputSegment, length.toLong())
+            Unit
         }
     }
 

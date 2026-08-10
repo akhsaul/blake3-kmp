@@ -163,6 +163,10 @@ fn addNdkSysroot(b: *std.Build, mod: *std.Build.Module, arch: std.Target.Cpu.Arc
     mod.addLibraryPath(.{ .cwd_relative = b.fmt("{s}/usr/lib/{s}/24", .{ sysroot, triple_str }) });
     mod.addLibraryPath(.{ .cwd_relative = b.fmt("{s}/usr/lib/{s}", .{ sysroot, triple_str }) });
 
+    // Link NDK libc.so and libm.so directly so LLD records DT_NEEDED
+    mod.addObjectFile(.{ .cwd_relative = b.fmt("{s}/usr/lib/{s}/24/libc.so", .{ sysroot, triple_str }) });
+    mod.addObjectFile(.{ .cwd_relative = b.fmt("{s}/usr/lib/{s}/24/libm.so", .{ sysroot, triple_str }) });
+
     // Direct sysroot layout fallback
     mod.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/sysroot/usr/include", .{ndk}) });
     mod.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/sysroot/usr/include/{s}", .{ ndk, triple_str }) });

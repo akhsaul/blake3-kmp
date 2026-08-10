@@ -45,9 +45,9 @@ jobs:
           find blake3-kmp/src/jvmMain/resources/jni -name "*.lib" -type f -delete
           ls -lRh blake3-kmp/src/jvmMain/resources/jni
 
-          find blake3-ffm/src/jvmMain/resources/jni -name "*.pdb" -type f -delete
-          find blake3-ffm/src/jvmMain/resources/jni -name "*.lib" -type f -delete
-          ls -lRh blake3-ffm/src/jvmMain/resources/jni
+          find blake3-ffm/src/main/resources/jni -name "*.pdb" -type f -delete
+          find blake3-ffm/src/main/resources/jni -name "*.lib" -type f -delete
+          ls -lRh blake3-ffm/src/main/resources/jni
 
       - uses: actions/upload-artifact@v7
         with:

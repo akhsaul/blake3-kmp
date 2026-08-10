@@ -52,9 +52,9 @@ node_modules/
 zig-out/
 .zig-cache/
 examples/
-jni/**
-jniLibs/**
+**/jni/*
+**/jniLibs/*
 
 # include the folder itself
-!jni/.gitkeep
-!jniLibs/.gitkeep
+!**/jni/.gitkeep
+!**/jniLibs/.gitkeep

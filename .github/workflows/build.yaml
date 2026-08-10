@@ -156,7 +156,7 @@ jobs:
             system-images: default
             arch: x86
           - os: ubuntu-latest
-            api-level: '36'
+            api-level: '37.0'
             system-images: google_apis_ps16k
             arch: x86_64
     runs-on: ${{ matrix.os }}
@@ -202,7 +202,7 @@ jobs:
           target: ${{ matrix.system-images }}
           arch: ${{ matrix.arch }}
           force-avd-creation: false
-          emulator-options: -noaudio -no-window -no-boot-anim -camera-back none
+          emulator-options: -no-window -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: echo "Generated AVD snapshot for caching."
 
@@ -230,7 +230,7 @@ jobs:
       - jvm-platform-test
       - android-test
       - static-checks
-    if: always() && !cancelled()
+    if: github.ref_type == 'tag' && !cancelled()
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -244,7 +244,6 @@ jobs:
           fi
 
       - uses: actions/checkout@v7
-        if: github.ref_type == 'tag'
         with:
           submodules: true
 

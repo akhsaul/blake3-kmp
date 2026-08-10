@@ -47,15 +47,28 @@ class Blake3AndroidDeviceTest {
     }
 
     @Test
-    fun testAndroid1MBBinaryChecksum() {
+    fun testAndroidPrecomputed2MBBinaryFileChecksum() {
         val targetContext = InstrumentationRegistry.getInstrumentation().targetContext
-        val tempFile = File(targetContext.cacheDir, "blake3_android_1mb.tmp")
+
+        val checksumStream =
+            Blake3AndroidDeviceTest::class.java.classLoader?.getResourceAsStream("bin/test.bin.blake3")
+                ?: Blake3AndroidDeviceTest::class.java.getResourceAsStream("/bin/test.bin.blake3")
+                ?: error("Failed to locate bin/test.bin.blake3 resource")
+
+        val expectedChecksum =
+            checksumStream.bufferedReader().use { reader ->
+                reader.readLine()?.substringBefore(' ')?.trim()
+            } ?: error("Failed to read checksum from resource")
+
+        val inputStream =
+            Blake3AndroidDeviceTest::class.java.classLoader?.getResourceAsStream("bin/test.bin")
+                ?: Blake3AndroidDeviceTest::class.java.getResourceAsStream("/bin/test.bin")
+                ?: error("Failed to locate bin/test.bin resource")
+
+        val tempFile = File(targetContext.cacheDir, "blake3_android_2mb.tmp")
         try {
             tempFile.outputStream().use { out ->
-                val buffer = ByteArray(64 * 1024) { (it % 251).toByte() }
-                repeat(16) {
-                    out.write(buffer)
-                }
+                inputStream.copyTo(out)
             }
 
             val actualHash =
@@ -74,20 +87,7 @@ class Blake3AndroidDeviceTest {
                     }
                 }
 
-            val streamingHash =
-                Blake3Hasher().use { hasher ->
-                    tempFile.inputStream().use { input ->
-                        val buf = ByteArray(64 * 1024)
-                        var read: Int
-                        while (input.read(buf).also { read = it } > 0) {
-                            hasher.update(buf, 0, read)
-                        }
-                    }
-                    hasher.finalize().toHexString()
-                }
-
-            assertEquals(streamingHash, actualHash)
-            assertEquals(64, actualHash.length)
+            assertEquals(expectedChecksum, actualHash)
         } finally {
             tempFile.delete()
         }

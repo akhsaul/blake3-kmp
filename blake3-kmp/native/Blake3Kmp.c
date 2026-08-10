@@ -19,46 +19,9 @@
 #include <string.h>
 #include "blake3.h"
 
-#if defined(__ANDROID__) || defined(ANDROID)
-size_t strlen(const char *s) {
-    const char *p = s;
-    while (p && *p) p++;
-    return (size_t)(p - s);
-}
-#endif
-
-#define MAX_HASHERS 64
-
-typedef struct {
-    blake3_hasher hasher;
-    int used;
-} HasherSlot;
-
-static HasherSlot g_hasher_pool[MAX_HASHERS];
-
-static blake3_hasher* pool_alloc(void) {
-    for (int i = 0; i < MAX_HASHERS; i++) {
-        if (!g_hasher_pool[i].used) {
-            g_hasher_pool[i].used = 1;
-            return &g_hasher_pool[i].hasher;
-        }
-    }
-    return NULL;
-}
-
-static void pool_free(blake3_hasher* ptr) {
-    if (ptr == NULL) return;
-    for (int i = 0; i < MAX_HASHERS; i++) {
-        if (&g_hasher_pool[i].hasher == ptr) {
-            g_hasher_pool[i].used = 0;
-            return;
-        }
-    }
-}
-
 JNIEXPORT jlong JNICALL
 Java_com_akhsaul_blake3_JniBlake3Kt_createHasher(JNIEnv* env, jclass clazz) {
-    blake3_hasher* hasher = pool_alloc();
+    blake3_hasher* hasher = (blake3_hasher*) malloc(sizeof(blake3_hasher));
     if (hasher != NULL) {
         blake3_hasher_init(hasher);
     }
@@ -71,7 +34,7 @@ Java_com_akhsaul_blake3_JniBlake3Kt_createKeyedHasher(JNIEnv* env, jclass clazz,
     jsize keyLen = (*env)->GetArrayLength(env, keyArray);
     if (keyLen != BLAKE3_KEY_LEN) return 0;
 
-    blake3_hasher* hasher = pool_alloc();
+    blake3_hasher* hasher = (blake3_hasher*) malloc(sizeof(blake3_hasher));
     if (hasher != NULL) {
         jbyte keyBuf[BLAKE3_KEY_LEN];
         (*env)->GetByteArrayRegion(env, keyArray, 0, BLAKE3_KEY_LEN, keyBuf);
@@ -115,7 +78,7 @@ JNIEXPORT void JNICALL
 Java_com_akhsaul_blake3_JniBlake3Kt_freeHasher(JNIEnv* env, jclass clazz, jlong hasherPtr) {
     if (hasherPtr == 0) return;
     blake3_hasher* hasher = (blake3_hasher*)(uintptr_t)hasherPtr;
-    pool_free(hasher);
+    free(hasher);
 }
 
 JNIEXPORT void JNICALL

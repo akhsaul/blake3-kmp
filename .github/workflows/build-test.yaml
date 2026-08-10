@@ -1,0 +1,137 @@
+name: build-and-light-test
+
+on:
+  pull_request: { }
+  workflow_dispatch: { }
+  push:
+    branches:
+      - 'main'
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
+  ZIG_VERSION: "0.16.0"
+  JDK_VERSION: "21"
+  JDK_VENDOR: "zulu"
+
+jobs:
+  build-binaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
+
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+
+      - run: |
+          zig build jvm -p src/jvmMain/resources/jni
+          zig build android -p src/androidMain/jniLibs
+        working-directory: blake3-kmp
+
+      - run: |
+          find src/jvmMain/resources/jni -name "*.pdb" -type f -delete
+          find src/jvmMain/resources/jni -name "*.lib" -type f -delete
+          ls -lRh src/jvmMain/resources/jni
+          ls -lRh src/androidMain/jniLibs
+        working-directory: blake3-kmp
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: blake3-kmp-jvm-binary
+          path: blake3-kmp/src/jvmMain/resources/jni
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: blake3-kmp-android-binary
+          path: blake3-kmp/src/androidMain/jniLibs
+          if-no-files-found: error
+
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
+
+      - name: Ensure Android SDK location property
+        run: |
+          if [ -d "$ANDROID_HOME" ]; then
+            echo "sdk.dir=$ANDROID_HOME" > local.properties
+          elif [ -d "$ANDROID_SDK_ROOT" ]; then
+            echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          else
+            mkdir -p /tmp/android-sdk
+            echo "sdk.dir=/tmp/android-sdk" > local.properties
+          fi
+
+      - name: Static checks
+        run: ./gradlew spotlessCheck check -x testAndroid -x testAndroidHostTest -x jvmTest -x androidConnectedCheck
+
+  binary-test-distribution:
+    runs-on: ubuntu-latest
+    needs:
+      - build-binaries
+      - static-checks
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-jvm-binary
+          path: blake3-kmp/src/jvmMain/resources/jni
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
+
+      - name: package jvm test as archive for later use
+        run: ./gradlew :blake3-kmp:installJvmTestDistribution
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: blake3-kmp-binary-tests
+          path: blake3-kmp/build/install/jvmTest
+          if-no-files-found: error
+
+  jvm-light-test:
+    needs:
+      - binary-test-distribution
+    strategy:
+      fail-fast: true
+      matrix:
+        platform:
+          - os: ubuntu-24.04
+            native-target: linuxX64
+    runs-on: ${{ matrix.platform.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-binary-tests
+
+      - name: Run JVM tests
+        run: |
+          chmod +x bin/blake3-kmp-test || true
+          bin/blake3-kmp-test

@@ -1,16 +1,17 @@
-name: build
+name: build-test-publish
 
 on:
   pull_request: { }
   workflow_dispatch: { }
   push:
-    branches:
-      - 'main'
     tags:
       - '**'
 
 env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
+  ZIG_VERSION: "0.16.0"
+  JDK_VERSION: "21"
+  JDK_VENDOR: "zulu"
 
 jobs:
   build-binaries:
@@ -22,12 +23,12 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          distribution: 'zulu'
-          java-version: '21'
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
 
       - uses: mlugg/setup-zig@v2
         with:
-          version: 0.16.0
+          version: ${{ env.ZIG_VERSION }}
 
       - run: |
           zig build jvm -p src/jvmMain/resources/jni
@@ -62,8 +63,8 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          distribution: 'zulu'
-          java-version: '21'
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
 
       - name: Ensure Android SDK location property
         run: |
@@ -96,10 +97,11 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          distribution: 'zulu'
-          java-version: '21'
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
 
-      - run: ./gradlew :blake3-kmp:installJvmTestDistribution
+      - name: package jvm test as archive for later use
+        run: ./gradlew :blake3-kmp:installJvmTestDistribution
 
       - uses: actions/upload-artifact@v7
         with:
@@ -132,8 +134,8 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          distribution: 'zulu'
-          java-version: '21'
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
 
       - uses: actions/download-artifact@v7
         with:
@@ -167,8 +169,8 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          distribution: 'zulu'
-          java-version: '21'
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
 
       - uses: actions/download-artifact@v7
         with:
@@ -251,8 +253,8 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          distribution: 'zulu'
-          java-version: '21'
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
 
       - uses: actions/download-artifact@v7
         with:

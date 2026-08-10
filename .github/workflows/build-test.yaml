@@ -30,17 +30,24 @@ jobs:
         with:
           version: ${{ env.ZIG_VERSION }}
 
-      - run: |
+      - name: build binary with zig
+        run: |
           zig build jvm -p src/jvmMain/resources/jni
+          cp -R src/jvmMain/resources/jni/* ../blake3-ffm/src/main/resources/jni/
           zig build android -p src/androidMain/jniLibs
         working-directory: blake3-kmp
 
-      - run: |
-          find src/jvmMain/resources/jni -name "*.pdb" -type f -delete
-          find src/jvmMain/resources/jni -name "*.lib" -type f -delete
-          ls -lRh src/jvmMain/resources/jni
-          ls -lRh src/androidMain/jniLibs
-        working-directory: blake3-kmp
+      - name: check all files
+        run: |
+          ls -lRh blake3-kmp/src/androidMain/jniLibs
+
+          find blake3-kmp/src/jvmMain/resources/jni -name "*.pdb" -type f -delete
+          find blake3-kmp/src/jvmMain/resources/jni -name "*.lib" -type f -delete
+          ls -lRh blake3-kmp/src/jvmMain/resources/jni
+
+          find blake3-ffm/src/jvmMain/resources/jni -name "*.pdb" -type f -delete
+          find blake3-ffm/src/jvmMain/resources/jni -name "*.lib" -type f -delete
+          ls -lRh blake3-ffm/src/jvmMain/resources/jni
 
       - uses: actions/upload-artifact@v7
         with:

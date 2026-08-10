@@ -182,6 +182,7 @@ jobs:
           path: blake3-ffm-dist
 
       - name: Run JVM tests
+        shell: bash
         run: |
           chmod +x blake3-kmp-dist/bin/blake3-kmp-test || true
           blake3-kmp-dist/bin/blake3-kmp-test

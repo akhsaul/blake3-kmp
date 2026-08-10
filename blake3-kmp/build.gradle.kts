@@ -11,6 +11,8 @@ plugins {
 }
 
 kotlin {
+    // let other module (ffm use JDK 25) set JDK version
+    // jvmToolchain(11)
     jvm {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)

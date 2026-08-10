@@ -10,9 +10,18 @@ plugins {
 }
 
 kotlin {
+    jvmToolchain(25)
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_21)
+        // FFM (stable) available in Java 22+
+        // but also available in Java 21 (preview)
+        jvmTarget.set(JvmTarget.JVM_22)
     }
+}
+
+// kotlin jvmToolchain auto-set to 25 while the kotlin is changed to 22
+// which makes incompatible java code and kotlin code
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(22)
 }
 
 tasks.withType<Test>().configureEach {

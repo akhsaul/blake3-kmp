@@ -17,10 +17,10 @@ pub fn build(b: *std.Build) !void {
     try setupTarget(b, &deleteLib.step, jvm_step, .windows, .aarch64, null, "aarch64");
 
     // --- Android Targets ---
-    try setupTarget(b, &deleteLib.step, android_step, .linux, .aarch64, .gnu, "arm64-v8a");
-    try setupTarget(b, &deleteLib.step, android_step, .linux, .arm, .gnueabi, "armeabi-v7a");
-    try setupTarget(b, &deleteLib.step, android_step, .linux, .x86_64, .gnu, "x86_64");
-    try setupTarget(b, &deleteLib.step, android_step, .linux, .x86, .gnu, "x86");
+    try setupTarget(b, &deleteLib.step, android_step, .linux, .aarch64, .android, "arm64-v8a");
+    try setupTarget(b, &deleteLib.step, android_step, .linux, .arm, .androideabi, "armeabi-v7a");
+    try setupTarget(b, &deleteLib.step, android_step, .linux, .x86_64, .android, "x86_64");
+    try setupTarget(b, &deleteLib.step, android_step, .linux, .x86, .android, "x86");
 }
 
 fn setupTarget(
@@ -54,11 +54,15 @@ fn setupTarget(
     );
     lib.addIncludePath(b.path("../BLAKE3/c"));
 
-    lib.linkLibC();
+    const is_android = if (abi) |a| (a == .android or a == .androideabi) else false;
+    if (is_android) {
+        addNdkSysroot(b, lib, arch);
+    } else {
+        lib.linkLibC();
+    }
     if (tag == .macos or tag == .ios) {
         lib.linkSystemLibrary("System");
     }
-
 
     lib.addCSourceFiles(.{
         .files = &.{
@@ -67,7 +71,10 @@ fn setupTarget(
             "../BLAKE3/c/blake3_portable.c",
             "native/Blake3Kmp.c",
         },
-        .flags = &.{
+        .flags = if (is_android) &.{
+            "-std=c99",
+            "-Wl,-lc",
+        } else &.{
             "-std=c99",
         },
     });

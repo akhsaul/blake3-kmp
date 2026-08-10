@@ -156,9 +156,13 @@ jobs:
             system-images: default
             arch: x86
           - os: ubuntu-latest
-            api-level: '37.0'
+            api-level: '36' # 37.0 still has bug (adb can't connect) for reactivecircus/android-emulator-runner@v2
             system-images: google_apis_ps16k
             arch: x86_64
+          - os: ubuntu-24.04-arm
+            api-level: '36' # 37.0 still has bug (adb can't connect) for reactivecircus/android-emulator-runner@v2
+            system-images: google_apis_ps16k
+            arch: arm64-v8a
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7

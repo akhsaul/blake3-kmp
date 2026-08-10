@@ -27,16 +27,18 @@ class Blake3Test {
         val key = "3bc471e75b7fbc99531eb3fbe146aabc".toByteArray()
         val data = "BLAKE3 - JVM Keyed Hash Test".encodeToByteArray()
 
-        val actualKeyedResult = Blake3.keyedHash(key, data)
-        val actualDefaultResult = Blake3.hash(data)
+        val hash = Blake3.hash(data)
+        val keyedHash = Blake3.keyedHash(key, data)
+        val actualDefaultResult = hash.toHexString()
+        val actualKeyedResult = keyedHash.toHexString()
 
         val expectedKeyedResult = "7695bd397344ce67a45dedbc19cd553fc9b60b3f5b1e420802d438c4254990b6"
         val expectedDefaultResult = "df459e8215d093073f4cb4c51bde2bdafeaa7ef125fbce12cb1b50e82bd6a045"
 
-        assertEquals(32, actualKeyedResult.size)
-        assertTrue(!actualKeyedResult.contentEquals(actualDefaultResult))
-        assertEquals(expectedKeyedResult, actualKeyedResult.toHexString())
-        assertEquals(expectedDefaultResult, actualDefaultResult.toHexString())
+        assertEquals(32, keyedHash.size)
+        assertTrue(!keyedHash.contentEquals(hash))
+        assertEquals(expectedKeyedResult, actualKeyedResult)
+        assertEquals(expectedDefaultResult, actualDefaultResult)
     }
 
     @Test
@@ -64,7 +66,7 @@ class Blake3Test {
                 java.io.RandomAccessFile(tempFile, "r").use { raf ->
                     val channel = raf.channel
                     val mappedBuffer = channel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, channel.size())
-                    Blake3Hasher().use { hasher ->
+                    Blake3Stream().use { hasher ->
                         val chunkSize = 64 * 1024
                         val chunk = ByteArray(chunkSize)
                         while (mappedBuffer.hasRemaining()) {
@@ -77,6 +79,10 @@ class Blake3Test {
                 }
 
             assertEquals(expectedChecksum, actualHash)
+
+            val fullData = tempFile.readBytes()
+            val actualOneShotHash = Blake3.hash(fullData).toHexString()
+            assertEquals(expectedChecksum, actualOneShotHash)
         } finally {
             tempFile.delete()
         }

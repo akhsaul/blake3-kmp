@@ -1,36 +1,32 @@
 package com.akhsaul.blake3
 
-public object Blake3 {
-    public const val KEY_LEN: Int = 32
-    public const val OUT_LEN: Int = 32
-    public const val BLOCK_LEN: Int = 64
-    public const val CHUNK_LEN: Int = 1024
+expect object Blake3 {
+    val KEY_LEN: Int
+    val OUT_LEN: Int
+    val BLOCK_LEN: Int
+    val CHUNK_LEN: Int
 
-    public fun hash(
+    fun hash(
         data: ByteArray,
         outLen: Int = OUT_LEN,
-    ): ByteArray {
-        val hasher = Blake3Hasher()
-        return try {
-            hasher.update(data)
-            hasher.finalize(outLen)
-        } finally {
-            hasher.close()
-        }
-    }
+    ): ByteArray
 
-    public fun keyedHash(
+    fun hashHex(
+        data: ByteArray,
+        outLen: Int = OUT_LEN,
+        format: HexFormat = HexFormat.Default,
+    ): String
+
+    fun keyedHash(
         key: ByteArray,
         data: ByteArray,
         outLen: Int = OUT_LEN,
-    ): ByteArray {
-        require(key.size == KEY_LEN) { "Key size must be $KEY_LEN bytes" }
-        val hasher = Blake3Hasher(key)
-        return try {
-            hasher.update(data)
-            hasher.finalize(outLen)
-        } finally {
-            hasher.close()
-        }
-    }
+    ): ByteArray
+
+    fun keyedHashHex(
+        key: ByteArray,
+        data: ByteArray,
+        outLen: Int = OUT_LEN,
+        format: HexFormat = HexFormat.Default,
+    ): String
 }

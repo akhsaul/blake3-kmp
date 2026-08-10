@@ -30,14 +30,14 @@ internal actual fun loadNativeLibrary() {
 
     val inputStream =
         candidates.firstNotNullOfOrNull { path ->
-            Blake3Hasher::class.java.getResourceAsStream(path)
+            Blake3Stream::class.java.getResourceAsStream(path)
         }
 
     if (inputStream == null) {
         try {
             System.loadLibrary("blake3-kmp")
             return
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             error("Could not load native library $libName for os=$osName arch=$osArch. Tried resources $candidates")
         }
     }

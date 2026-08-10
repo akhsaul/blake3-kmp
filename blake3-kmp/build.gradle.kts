@@ -38,6 +38,9 @@ kotlin {
     }
     applyDefaultHierarchyTemplate()
 
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
     withSourcesJar(false)
 
     sourceSets {

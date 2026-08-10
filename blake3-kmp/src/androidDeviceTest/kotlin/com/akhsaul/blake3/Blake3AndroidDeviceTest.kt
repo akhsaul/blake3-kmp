@@ -34,16 +34,18 @@ class Blake3AndroidDeviceTest {
         val key = "3bc471e75b7fbc99531eb3fbe146aabc".toByteArray()
         val data = "BLAKE3 - Android Keyed Hash Test".encodeToByteArray()
 
-        val actualKeyedResult = Blake3.keyedHash(key, data)
-        val actualDefaultResult = Blake3.hash(data)
+        val hash = Blake3.hash(data)
+        val keyedHash = Blake3.keyedHash(key, data)
+        val actualDefaultResult = hash.toHexString()
+        val actualKeyedResult = keyedHash.toHexString()
 
         val expectedKeyedResult = "00403b84e3df714b4527067ef3e122658a8882e0c8665191812992fc5fb63f80"
         val expectedDefaultResult = "b1e7e12454e0df7331c0aa8830ff1b67c7b00f5b8f333a8c0211f8c2f8e40490"
 
-        assertEquals(32, actualKeyedResult.size)
-        assertTrue(!actualKeyedResult.contentEquals(actualDefaultResult))
-        assertEquals(expectedKeyedResult, actualKeyedResult.toHexString())
-        assertEquals(expectedDefaultResult, actualDefaultResult.toHexString())
+        assertEquals(32, keyedHash.size)
+        assertTrue(!keyedHash.contentEquals(hash))
+        assertEquals(expectedKeyedResult, actualKeyedResult)
+        assertEquals(expectedDefaultResult, actualDefaultResult)
     }
 
     @Test
@@ -75,7 +77,7 @@ class Blake3AndroidDeviceTest {
                 RandomAccessFile(tempFile, "r").use { raf ->
                     val channel = raf.channel
                     val mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())
-                    Blake3Hasher().use { hasher ->
+                    Blake3Stream().use { hasher ->
                         val chunkSize = 64 * 1024
                         val chunk = ByteArray(chunkSize)
                         while (mappedBuffer.hasRemaining()) {

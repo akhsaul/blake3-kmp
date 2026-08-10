@@ -151,20 +151,20 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: ubuntu-latest
-            api-level: '27'
-            system-images: default
-            arch: x86
           - os: macOS-15
             api-level: '27'
             system-images: default
             arch: arm64-v8a
           - os: ubuntu-latest
-            api-level: '36.1'
+            api-level: '27'
+            system-images: default
+            arch: x86
+          - os: ubuntu-latest
+            api-level: '36'
             system-images: google_apis_ps16k
             arch: x86_64
           - os: macOS-15
-            api-level: '36.1'
+            api-level: '36'
             system-images: google_apis_ps16k
             arch: arm64-v8a
     runs-on: ${{ matrix.os }}

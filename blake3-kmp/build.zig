@@ -73,7 +73,7 @@ fn setupTarget(
         },
         .flags = if (is_android) &.{
             "-std=c99",
-            "-Wl,-lc",
+            "-Wl,--no-as-needed,-lc",
         } else &.{
             "-std=c99",
         },

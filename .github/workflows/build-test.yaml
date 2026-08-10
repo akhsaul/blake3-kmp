@@ -164,15 +164,17 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: blake3-kmp-binary-tests
+          path: blake3-kmp-dist
 
       - uses: actions/download-artifact@v7
         with:
           name: blake3-ffm-binary-tests
+          path: blake3-ffm-dist
 
       - name: Run JVM tests
         run: |
-          chmod +x bin/blake3-kmp-test || true
-          bin/blake3-kmp-test
+          chmod +x blake3-kmp-dist/bin/blake3-kmp-test || true
+          blake3-kmp-dist/bin/blake3-kmp-test
 
-          chmod +x bin/blake3-ffm-test || true
-          JAVA_OPTS="--enable-native-access=ALL-UNNAMED" bin/blake3-ffm-test
+          chmod +x blake3-ffm-dist/bin/blake3-ffm-test || true
+          JAVA_OPTS="--enable-native-access=ALL-UNNAMED" blake3-ffm-dist/bin/blake3-ffm-test

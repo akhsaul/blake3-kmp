@@ -1,0 +1,39 @@
+#!/usr/bin/sh
+
+if [ -z "$ANDROID_NDK_HOME" ]; then
+    echo "Error: Env Variable ANDROID_NDK_HOME is not set."
+    exit 1
+fi
+
+if [ -z "$GITHUB_REF_NAME" ] && [ -z "$VERSION" ]; then
+    echo "Error: Env Variable GITHUB_REF_NAME or VERSION is not set."
+    exit 1
+fi
+
+rm -rf blake3-kmp/src/jvmMain/resources/jni
+rm -rf blake3-kmp/src/androidMain/jniLibs
+rm -rf blake3-ffm/src/main/resources/jni/
+
+mkdir blake3-kmp/src/jvmMain/resources/jni
+mkdir blake3-kmp/src/androidMain/jniLibs  
+mkdir blake3-ffm/src/main/resources/jni/
+
+cd blake3-kmp
+zig build android -p src/androidMain/jniLibs
+zig build jvm -p src/jvmMain/resources/jni
+cp -R src/jvmMain/resources/jni/* ../blake3-ffm/src/main/resources/jni/
+cd ..
+
+ls -lRh blake3-kmp/src/androidMain/jniLibs
+
+find blake3-kmp/src/jvmMain/resources/jni -name "*.pdb" -type f -delete
+find blake3-kmp/src/jvmMain/resources/jni -name "*.lib" -type f -delete
+ls -lRh blake3-kmp/src/jvmMain/resources/jni
+
+find blake3-ffm/src/main/resources/jni -name "*.pdb" -type f -delete
+find blake3-ffm/src/main/resources/jni -name "*.lib" -type f -delete
+ls -lRh blake3-ffm/src/main/resources/jni
+
+echo "---------- zig build is done ----------"
+
+./gradlew publishToMavenLocal

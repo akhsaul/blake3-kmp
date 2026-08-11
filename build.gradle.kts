@@ -17,13 +17,15 @@ plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library) apply false
 }
 
-val envTag = System.getenv("GITHUB_REF_NAME")?.removePrefix("v")
+val envGitTag = System.getenv("GITHUB_REF_NAME")?.removePrefix("v")
+val envVersion = System.getenv("VERSION")?.removePrefix("v")
 val libraryVersion =
     providers
         .gradleProperty("version")
         .orNull
         ?.takeIf { it != "unspecified" }
-        ?: envTag
+        ?: envVersion
+        ?: envGitTag
         ?: "0.1.0-SNAPSHOT"
 
 allprojects {

@@ -19,7 +19,7 @@ kotlin {
 }
 
 // kotlin jvmToolchain auto-set to 25 while the kotlin is changed to 22
-// which makes incompatible java code and kotlin code
+// which makes incompatible Java code and Kotlin code
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(22)
 }

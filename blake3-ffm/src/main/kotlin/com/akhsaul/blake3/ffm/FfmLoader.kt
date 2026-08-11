@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 private val loaded = AtomicBoolean(false)
 
 @Suppress("UnsafeDynamicallyLoadedCode")
-internal fun loadFfmNativeLibrary() {
+internal fun loadNativeLibrary() {
     if (loaded.getAndSet(true)) return
 
     val osName = System.getProperty("os.name").lowercase(US)
@@ -30,7 +30,7 @@ internal fun loadFfmNativeLibrary() {
 
     val inputStream =
         candidates.firstNotNullOfOrNull { path ->
-            Blake3Ffm::class.java.getResourceAsStream(path)
+            Blake3::class.java.getResourceAsStream(path)
         }
 
     if (inputStream == null) {

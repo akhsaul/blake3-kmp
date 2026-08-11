@@ -42,7 +42,7 @@ class Blake3Test {
     }
 
     @Test
-    fun testPrecomputed2MBBinaryFileChecksum() {
+    fun testPrecomputedBinaryFileChecksum() {
         val checksumStream =
             Blake3Test::class.java.getResourceAsStream("/bin/test.bin.blake3")
                 ?: return

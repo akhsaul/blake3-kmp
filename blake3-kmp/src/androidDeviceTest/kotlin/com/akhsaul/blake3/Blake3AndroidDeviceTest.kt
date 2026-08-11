@@ -49,7 +49,7 @@ class Blake3AndroidDeviceTest {
     }
 
     @Test
-    fun testPrecomputedBinaryFileChecksum() {
+    fun testAndroidPrecomputed2MBBinaryFileChecksum() {
         val targetContext = InstrumentationRegistry.getInstrumentation().targetContext
 
         val checksumStream =

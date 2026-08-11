@@ -8,13 +8,13 @@ actual class Blake3Stream : AutoCloseable {
     }
 
     actual constructor() {
-        hasherPtr = createHasher()
+        hasherPtr = JniBlake3.createHasher()
         check(hasherPtr != 0L) { "Failed to allocate native BLAKE3 hasher" }
     }
 
     actual constructor(key: ByteArray) {
         require(key.size == Blake3.KEY_LEN) { "Key size must be ${Blake3.KEY_LEN} bytes" }
-        hasherPtr = createKeyedHasher(key)
+        hasherPtr = JniBlake3.createKeyedHasher(key)
         check(hasherPtr != 0L) { "Failed to allocate native BLAKE3 keyed hasher" }
     }
 
@@ -26,7 +26,7 @@ actual class Blake3Stream : AutoCloseable {
         if (length <= 0) return
         require(offset >= 0 && offset + length <= input.size) { "Index out of bounds" }
         check(hasherPtr != 0L) { "Blake3Stream has been closed" }
-        hasherUpdate(hasherPtr, input, offset, length)
+        JniBlake3.hasherUpdate(hasherPtr, input, offset, length)
     }
 
     actual fun finalize(
@@ -37,7 +37,7 @@ actual class Blake3Stream : AutoCloseable {
         if (length <= 0) return
         require(offset >= 0 && offset + length <= out.size) { "Index out of bounds" }
         check(hasherPtr != 0L) { "Blake3Stream has been closed" }
-        hasherFinalize(hasherPtr, out, offset, length)
+        JniBlake3.hasherFinalize(hasherPtr, out, offset, length)
     }
 
     actual fun finalize(outLen: Int): ByteArray {
@@ -48,12 +48,12 @@ actual class Blake3Stream : AutoCloseable {
 
     actual fun reset() {
         check(hasherPtr != 0L) { "Blake3Stream has been closed" }
-        hasherReset(hasherPtr)
+        JniBlake3.hasherReset(hasherPtr)
     }
 
     actual override fun close() {
         if (hasherPtr != 0L) {
-            freeHasher(hasherPtr)
+            JniBlake3.freeHasher(hasherPtr)
             hasherPtr = 0L
         }
     }

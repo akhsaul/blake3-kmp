@@ -30,7 +30,7 @@ internal fun loadNativeLibrary() {
 
     val inputStream =
         candidates.firstNotNullOfOrNull { path ->
-            Blake3::class.java.getResourceAsStream(path)
+            FfmBlake3::class.java.getResourceAsStream(path)
         }
 
     if (inputStream == null) {

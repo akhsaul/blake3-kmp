@@ -13,7 +13,7 @@ actual object Blake3 {
         loadNativeLibrary()
         require(outLen > 0) { "Output length must be positive" }
         val result = ByteArray(outLen)
-        hash(data, 0, data.size, result, outLen)
+        JniBlake3.hash(data, 0, data.size, result, outLen)
         return result
     }
 
@@ -32,7 +32,7 @@ actual object Blake3 {
         require(key.size == KEY_LEN) { "Key size must be $KEY_LEN bytes" }
         require(outLen > 0) { "Output length must be positive" }
         val result = ByteArray(outLen)
-        keyedHash(key, data, 0, data.size, result, outLen)
+        JniBlake3.keyedHash(key, data, 0, data.size, result, outLen)
         return result
     }
 
@@ -43,5 +43,3 @@ actual object Blake3 {
         format: HexFormat,
     ): String = this.keyedHash(key, data, outLen).convertToHex(format)
 }
-
-internal expect fun ByteArray.convertToHex(format: HexFormat = HexFormat.Default): String

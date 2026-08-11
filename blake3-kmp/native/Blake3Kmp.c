@@ -24,7 +24,7 @@ BLAKE3_API size_t blake3_hasher_sizeof(void) {
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_akhsaul_blake3_JniBlake3Kt_createHasher(JNIEnv* env, jclass clazz) {
+Java_com_akhsaul_blake3_JniBlake3_createHasher(JNIEnv* env, jclass clazz) {
     blake3_hasher* hasher = (blake3_hasher*) malloc(sizeof(blake3_hasher));
     if (hasher != NULL) {
         blake3_hasher_init(hasher);
@@ -33,7 +33,7 @@ Java_com_akhsaul_blake3_JniBlake3Kt_createHasher(JNIEnv* env, jclass clazz) {
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_akhsaul_blake3_JniBlake3Kt_createKeyedHasher(JNIEnv* env, jclass clazz, jbyteArray keyArray) {
+Java_com_akhsaul_blake3_JniBlake3_createKeyedHasher(JNIEnv* env, jclass clazz, jbyteArray keyArray) {
     if (keyArray == NULL) return 0;
     jsize keyLen = (*env)->GetArrayLength(env, keyArray);
     if (keyLen != BLAKE3_KEY_LEN) return 0;
@@ -48,7 +48,7 @@ Java_com_akhsaul_blake3_JniBlake3Kt_createKeyedHasher(JNIEnv* env, jclass clazz,
 }
 
 JNIEXPORT void JNICALL
-Java_com_akhsaul_blake3_JniBlake3Kt_hasherUpdate(JNIEnv* env, jclass clazz, jlong hasherPtr, jbyteArray input, jint offset, jint length) {
+Java_com_akhsaul_blake3_JniBlake3_hasherUpdate(JNIEnv* env, jclass clazz, jlong hasherPtr, jbyteArray input, jint offset, jint length) {
     if (hasherPtr == 0 || input == NULL || length <= 0) return;
     blake3_hasher* hasher = (blake3_hasher*)(uintptr_t)hasherPtr;
 
@@ -60,7 +60,7 @@ Java_com_akhsaul_blake3_JniBlake3Kt_hasherUpdate(JNIEnv* env, jclass clazz, jlon
 }
 
 JNIEXPORT void JNICALL
-Java_com_akhsaul_blake3_JniBlake3Kt_hasherFinalize(JNIEnv* env, jclass clazz, jlong hasherPtr, jbyteArray output, jint offset, jint length) {
+Java_com_akhsaul_blake3_JniBlake3_hasherFinalize(JNIEnv* env, jclass clazz, jlong hasherPtr, jbyteArray output, jint offset, jint length) {
     if (hasherPtr == 0 || output == NULL || length <= 0) return;
     blake3_hasher* hasher = (blake3_hasher*)(uintptr_t)hasherPtr;
 
@@ -72,21 +72,21 @@ Java_com_akhsaul_blake3_JniBlake3Kt_hasherFinalize(JNIEnv* env, jclass clazz, jl
 }
 
 JNIEXPORT void JNICALL
-Java_com_akhsaul_blake3_JniBlake3Kt_hasherReset(JNIEnv* env, jclass clazz, jlong hasherPtr) {
+Java_com_akhsaul_blake3_JniBlake3_hasherReset(JNIEnv* env, jclass clazz, jlong hasherPtr) {
     if (hasherPtr == 0) return;
     blake3_hasher* hasher = (blake3_hasher*)(uintptr_t)hasherPtr;
     blake3_hasher_reset(hasher);
 }
 
 JNIEXPORT void JNICALL
-Java_com_akhsaul_blake3_JniBlake3Kt_freeHasher(JNIEnv* env, jclass clazz, jlong hasherPtr) {
+Java_com_akhsaul_blake3_JniBlake3_freeHasher(JNIEnv* env, jclass clazz, jlong hasherPtr) {
     if (hasherPtr == 0) return;
     blake3_hasher* hasher = (blake3_hasher*)(uintptr_t)hasherPtr;
     free(hasher);
 }
 
 JNIEXPORT void JNICALL
-Java_com_akhsaul_blake3_JniBlake3Kt_hash(JNIEnv* env, jclass clazz, jbyteArray input, jint offset, jint length, jbyteArray output, jint outLen) {
+Java_com_akhsaul_blake3_JniBlake3_hash(JNIEnv* env, jclass clazz, jbyteArray input, jint offset, jint length, jbyteArray output, jint outLen) {
     if (output == NULL || outLen <= 0) return;
 
     blake3_hasher hasher;
@@ -108,7 +108,7 @@ Java_com_akhsaul_blake3_JniBlake3Kt_hash(JNIEnv* env, jclass clazz, jbyteArray i
 }
 
 JNIEXPORT void JNICALL
-Java_com_akhsaul_blake3_JniBlake3Kt_keyedHash(JNIEnv* env, jclass clazz, jbyteArray keyArray, jbyteArray input, jint offset, jint length, jbyteArray output, jint outLen) {
+Java_com_akhsaul_blake3_JniBlake3_keyedHash(JNIEnv* env, jclass clazz, jbyteArray keyArray, jbyteArray input, jint offset, jint length, jbyteArray output, jint outLen) {
     if (keyArray == NULL || output == NULL || outLen <= 0) return;
     if ((*env)->GetArrayLength(env, keyArray) != BLAKE3_KEY_LEN) return;
 

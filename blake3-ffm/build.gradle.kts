@@ -49,6 +49,22 @@ mavenPublishing {
         ),
     )
     coordinates(group.toString(), "blake3-ffm", version.toString())
+    publishing {
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/akhsaul/blake3-kmp")
+                credentials {
+                    username =
+                        providers.gradleProperty("gpr.user").orNull
+                            ?: providers.environmentVariable("GITHUB_ACTOR").orNull
+                    password =
+                        providers.gradleProperty("gpr.key").orNull
+                            ?: providers.environmentVariable("GITHUB_TOKEN").orNull
+                }
+            }
+        }
+    }
     pom {
         name.set("Blake3 FFM")
         description.set("Blake3 ffm for jvm 22+")
@@ -56,9 +72,9 @@ mavenPublishing {
         url.set("https://github.com/akhsaul/blake3-kmp/")
         licenses {
             license {
-                // name.set("The Apache License, Version 2.0")
-                // url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                // distribution.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                name.set("MIT License")
+                url.set("https://opensource.org/licenses/MIT")
+                distribution.set("repo")
             }
         }
         developers {

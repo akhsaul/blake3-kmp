@@ -1,11 +1,14 @@
 name: build-test-publish
 
+permissions:
+  contents: read
+
 on:
   pull_request: { }
   workflow_dispatch: { }
   push:
     tags:
-      - '**'
+      - 'v*'
 
 env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
@@ -338,3 +341,44 @@ jobs:
             ~/.m2/repository/com/akhsaul/blake3/**/*.aar
             ~/.m2/repository/com/akhsaul/blake3/**/*.pom
             ~/.m2/repository/com/akhsaul/blake3/**/*.module
+
+  publish-github-packages:
+    needs:
+      - jvm-platform-test
+      - android-test
+      - static-checks
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-jvm-binary
+          path: blake3-kmp/src/jvmMain/resources/jni
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-android-binary
+          path: blake3-kmp/src/androidMain/jniLibs
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-ffm-jvm-binary
+          path: blake3-ffm/src/main/resources/jni
+
+      - name: Publish to GitHub Packages
+        run: ./gradlew publishAllPublicationsToGitHubPackagesRepository
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

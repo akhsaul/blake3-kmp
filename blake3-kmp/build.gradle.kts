@@ -84,6 +84,22 @@ mavenPublishing {
         ),
     )
     coordinates(group.toString(), "blake3-kmp", version.toString())
+    publishing {
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/akhsaul/blake3-kmp")
+                credentials {
+                    username =
+                        providers.gradleProperty("gpr.user").orNull
+                            ?: providers.environmentVariable("GITHUB_ACTOR").orNull
+                    password =
+                        providers.gradleProperty("gpr.key").orNull
+                            ?: providers.environmentVariable("GITHUB_TOKEN").orNull
+                }
+            }
+        }
+    }
     pom {
         name.set("Blake3 KMP")
         description.set("Blake3 jni for jvm and android")

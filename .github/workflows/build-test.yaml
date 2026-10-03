@@ -36,24 +36,24 @@ jobs:
         run: |
           zig build jvm -p src/jvmMain/resources/jni
           cp -R src/jvmMain/resources/jni/* ../blake3-ffm/src/main/resources/jni/
-          mkdir -p ../blake3-kmp-android-test/src/jvmMain/resources/jni
-          cp -R src/jvmMain/resources/jni/. ../blake3-kmp-android-test/src/jvmMain/resources/jni/
+          mkdir -p src/androidDebug/jniLibs src/androidDebug/resources/jni
+          cp -R src/jvmMain/resources/jni/. src/androidDebug/resources/jni/
           zig build android -p src/androidMain/jniLibs
-          zig build android-test -p ../blake3-kmp-android-test/src/androidMain/jniLibs
+          zig build android-test -p src/androidDebug/jniLibs
         working-directory: blake3-kmp
 
       - name: check all files
         run: |
           ls -lRh blake3-kmp/src/androidMain/jniLibs
+          ls -lRh blake3-kmp/src/androidDebug/jniLibs
 
           find blake3-kmp/src/jvmMain/resources/jni -name "*.pdb" -type f -delete
           find blake3-kmp/src/jvmMain/resources/jni -name "*.lib" -type f -delete
           ls -lRh blake3-kmp/src/jvmMain/resources/jni
 
-          find blake3-kmp-android-test/src/jvmMain/resources/jni -name "*.pdb" -type f -delete
-          find blake3-kmp-android-test/src/jvmMain/resources/jni -name "*.lib" -type f -delete
-          ls -lRh blake3-kmp-android-test/src/jvmMain/resources/jni
-          ls -lRh blake3-kmp-android-test/src/androidMain/jniLibs
+          find blake3-kmp/src/androidDebug/resources/jni -name "*.pdb" -type f -delete
+          find blake3-kmp/src/androidDebug/resources/jni -name "*.lib" -type f -delete
+          ls -lRh blake3-kmp/src/androidDebug/resources/jni
 
           find blake3-ffm/src/main/resources/jni -name "*.pdb" -type f -delete
           find blake3-ffm/src/main/resources/jni -name "*.lib" -type f -delete
@@ -73,14 +73,8 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: blake3-kmp-android-test-jvm-binary
-          path: blake3-kmp-android-test/src/jvmMain/resources/jni
-          if-no-files-found: error
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: blake3-kmp-android-test-android-binary
-          path: blake3-kmp-android-test/src/androidMain/jniLibs
+          name: blake3-kmp-android-debug-binary
+          path: blake3-kmp/src/androidDebug
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v7
@@ -160,6 +154,51 @@ jobs:
           name: blake3-ffm-binary-tests
           path: blake3-ffm/build/install/test
           if-no-files-found: error
+
+  android-host-test:
+    runs-on: ubuntu-latest
+    needs:
+      - build-binaries
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-jvm-binary
+          path: blake3-kmp/src/jvmMain/resources/jni
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-android-binary
+          path: blake3-kmp/src/androidMain/jniLibs
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-android-debug-binary
+          path: blake3-kmp/src/androidDebug
+
+      - uses: actions/setup-java@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
+
+      - name: Ensure Android SDK location property
+        run: |
+          if [ -d "$ANDROID_HOME" ]; then
+            echo "sdk.dir=$ANDROID_HOME" > local.properties
+          elif [ -d "$ANDROID_SDK_ROOT" ]; then
+            echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          else
+            mkdir -p /tmp/android-sdk
+            echo "sdk.dir=/tmp/android-sdk" > local.properties
+          fi
+
+      - name: run android host tests (no manual native setup)
+        run: ./gradlew :blake3-kmp:testAndroidHostTest :blake3-kmp:testAndroid
 
   jvm-light-test:
     needs:

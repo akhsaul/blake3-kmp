@@ -4,15 +4,14 @@ Kotlin Multiplatform bindings for BLAKE3, backed by JNI, with a separate JVM For
 
 ## Published modules
 
-The KMP coordinates publish Gradle Module Metadata that routes consumers to a platform-specific artifact. Both the metadata component and its target artifacts use the group `com.akhsaul.blake3` and are published to GitHub Packages at `https://maven.pkg.github.com/akhsaul/blake3-kmp`.
+The KMP coordinates publish Gradle Module Metadata that routes consumers to a platform-specific artifact. All artifacts use the group `com.akhsaul.blake3` and are published to GitHub Packages at `https://maven.pkg.github.com/akhsaul/blake3-kmp`.
 
-| KMP coordinate | Android target artifact | JVM target artifact | Native payload |
+| KMP coordinate | Android target artifact(s) | JVM target artifact | Native payload |
 | --- | --- | --- | --- |
-| `com.akhsaul.blake3:blake3-kmp:<version>` | `blake3-kmp-android` | `blake3-kmp-jvm` | Production Android: `arm64-v8a`, `armeabi-v7a`, `x86`; desktop JVM: host libraries in `aarch64` and `amd64` resource paths (`amd64` includes x86_64 targets) |
-| `com.akhsaul.blake3:blake3-kmp-android-test:<version>` | `blake3-kmp-android-test-android` | `blake3-kmp-android-test-jvm` | Test Android AAR: `x86_64` only; JVM host-test JAR: desktop JNI resources in `aarch64` and `amd64` resource paths (`amd64` includes macOS x86_64) |
+| `com.akhsaul.blake3:blake3-kmp:<version>` | `blake3-kmp-android` (release) + debug variant | `blake3-kmp-jvm` | Release Android AAR: `arm64-v8a`, `armeabi-v7a`, `x86`. Debug Android AAR: production ABIs + `x86_64` for emulator tests + desktop JNI in `classes.jar` (`aarch64` and `amd64` resource paths, `amd64` includes macOS x86_64). Desktop JVM JAR: host libraries in `aarch64` and `amd64` resource paths |
 | `com.akhsaul.blake3:blake3-ffm:<version>` | — | `blake3-ffm` | JVM 22+ FFM implementation |
 
-The `-android-test` KMP coordinate is a test-only distribution. Its Android target contains only `x86_64` for emulator testing; its JVM target contains desktop libraries. The regular `blake3-kmp` Android AAR contains only `arm64-v8a`, `armeabi-v7a`, and `x86`, and never includes the Linux/macOS/Windows JNI payload or Android `x86_64`.
+The release Android AAR contains only production ABIs and never includes the Linux/macOS/Windows JNI payload or Android `x86_64`. The debug variant is selected automatically for debug builds (including all unit and host tests) through standard Gradle variant-aware resolution, so consumers need no extra configuration and never extract binaries manually.
 
 Use a release tag without its `v` prefix as the version: tag `v0.4.1` publishes version `0.4.1`. The default local version is `0.1.0-SNAPSHOT`.
 
@@ -48,29 +47,13 @@ dependencies {
 
 ### Android `androidHostTest` on a desktop JVM
 
-An Android host test is compiled in an Android source-set context, so Gradle normally selects the Android AAR for its runtime classpath—even though the test executes on the desktop JVM. For a project that declares `blake3-kmp` in `commonMain`, replace that dependency only on the host-test compile/runtime configurations with the test distribution's JVM target artifact. This selects the JVM `actual` loader and its packaged desktop JNI resources; nothing is manually extracted, and device/runtime configurations continue to use the production Android artifact.
-
-```kotlin
-val blake3Version = "<version>"
-configurations.configureEach {
-    if (name == "androidHostTestCompileClasspath" ||
-        name == "androidHostTestRuntimeClasspath"
-    ) {
-        resolutionStrategy.dependencySubstitution {
-            substitute(module("com.akhsaul.blake3:blake3-kmp"))
-                .using(module("com.akhsaul.blake3:blake3-kmp-android-test-jvm:$blake3Version"))
-        }
-    }
-}
-```
-
-The test KMP root coordinate is `com.akhsaul.blake3:blake3-kmp-android-test:<version>`; its JVM target artifact is `com.akhsaul.blake3:blake3-kmp-android-test-jvm:<version>`. Use the `-jvm` target explicitly in the host-test substitution because Gradle's Android host-test configurations otherwise request Android attributes.
+An Android host test is compiled in an Android source-set context, so Gradle selects the Android AAR for its runtime classpath — even though the test executes on the desktop JVM. Unit and host tests resolve the debug variant by default, whose `classes.jar` bundles the desktop JNI resources and whose loader falls back to extracting them when `System.loadLibrary` fails (as it always does off-device). Nothing is manually extracted, and release builds continue to use the production-only Android artifact.
 
 GitHub Packages requires credentials to download packages. For local builds, set `gpr.user` and `gpr.key` in `~/.gradle/gradle.properties`, or provide `GITHUB_ACTOR` and `GITHUB_TOKEN` as environment variables. A personal access token (classic) for package consumption needs the `read:packages` scope; do not commit it. In GitHub Actions, a consumer's `GITHUB_TOKEN` can read the package if that repository has package access. See [GitHub's Gradle registry authentication guide](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry#authenticating-to-github-packages).
 
 ## Local build and publication
 
-Native libraries are generated by `VERSION=0.4.1-SNAPSHOT ./build-package` (requires Zig 0.16.0 and `ANDROID_NDK_HOME`). It builds the three production Android ABIs separately from the test-only `x86_64` ABI, then copies the desktop JVM libraries into the JVM test target. A full Android publication also requires an installed Android SDK. Override the local version with `-Pversion=0.4.1-SNAPSHOT` when publishing directly with Gradle.
+Native libraries are generated by `VERSION=0.4.1-SNAPSHOT ./build-package` (requires Zig 0.16.0 and `ANDROID_NDK_HOME`). It builds the three production Android ABIs into `src/androidMain/jniLibs`, the test-only `x86_64` ABI into `src/androidDebug/jniLibs`, and the desktop JVM libraries into `src/jvmMain/resources/jni` (copied to `src/androidDebug/resources/jni` and `blake3-ffm`). A full Android publication also requires an installed Android SDK. Override the local version with `-Pversion=0.4.1-SNAPSHOT` when publishing directly with Gradle.
 
 `./gradlew publishToMavenLocal` publishes all modules locally without GitHub credentials. For formatting and static checks that skip native-dependent tests, use:
 
@@ -78,4 +61,4 @@ Native libraries are generated by `VERSION=0.4.1-SNAPSHOT ./build-package` (requ
 ./gradlew spotlessCheck check -x testAndroid -x testAndroidHostTest -x jvmTest -x androidConnectedCheck -x test
 ```
 
-The CI workflows build both Android ABI sets and the shared desktop JNI payload. The x86 emulator tests use the production Android target; x86_64 emulator tests use the test target.
+The CI workflows build the production ABI set, the debug-only `x86_64` ABI, and the shared desktop JNI payload. The x86 emulator tests run against the debug variant (which merges production ABIs); x86_64 emulator tests use the debug-only ABI. A dedicated host-test job runs `testAndroidHostTest` and `testAndroid` with no manual native setup, and the publish job asserts the release AAR has no `x86_64` while exactly one published AAR carries it with desktop resources in `classes.jar`.

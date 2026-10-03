@@ -39,24 +39,24 @@ jobs:
         run: |
           zig build jvm -p src/jvmMain/resources/jni
           cp -R src/jvmMain/resources/jni/* ../blake3-ffm/src/main/resources/jni/
-          mkdir -p ../blake3-kmp-android-test/src/jvmMain/resources/jni
-          cp -R src/jvmMain/resources/jni/. ../blake3-kmp-android-test/src/jvmMain/resources/jni/
+          mkdir -p src/androidDebug/jniLibs src/androidDebug/resources/jni
+          cp -R src/jvmMain/resources/jni/. src/androidDebug/resources/jni/
           zig build android -p src/androidMain/jniLibs
-          zig build android-test -p ../blake3-kmp-android-test/src/androidMain/jniLibs
+          zig build android-test -p src/androidDebug/jniLibs
         working-directory: blake3-kmp
 
       - name: check all files
         run: |
           ls -lRh blake3-kmp/src/androidMain/jniLibs
+          ls -lRh blake3-kmp/src/androidDebug/jniLibs
 
           find blake3-kmp/src/jvmMain/resources/jni -name "*.pdb" -type f -delete
           find blake3-kmp/src/jvmMain/resources/jni -name "*.lib" -type f -delete
           ls -lRh blake3-kmp/src/jvmMain/resources/jni
 
-          find blake3-kmp-android-test/src/jvmMain/resources/jni -name "*.pdb" -type f -delete
-          find blake3-kmp-android-test/src/jvmMain/resources/jni -name "*.lib" -type f -delete
-          ls -lRh blake3-kmp-android-test/src/jvmMain/resources/jni
-          ls -lRh blake3-kmp-android-test/src/androidMain/jniLibs
+          find blake3-kmp/src/androidDebug/resources/jni -name "*.pdb" -type f -delete
+          find blake3-kmp/src/androidDebug/resources/jni -name "*.lib" -type f -delete
+          ls -lRh blake3-kmp/src/androidDebug/resources/jni
 
           find blake3-ffm/src/main/resources/jni -name "*.pdb" -type f -delete
           find blake3-ffm/src/main/resources/jni -name "*.lib" -type f -delete
@@ -76,14 +76,8 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: blake3-kmp-android-test-jvm-binary
-          path: blake3-kmp-android-test/src/jvmMain/resources/jni
-          if-no-files-found: error
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: blake3-kmp-android-test-android-binary
-          path: blake3-kmp-android-test/src/androidMain/jniLibs
+          name: blake3-kmp-android-debug-binary
+          path: blake3-kmp/src/androidDebug
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v7
@@ -224,12 +218,10 @@ jobs:
             api-level: '27'
             system-images: default
             arch: x86
-            library-project: blake3-kmp
           - os: ubuntu-latest
             api-level: '36' # 37.0 still has bug (adb can't connect) for reactivecircus/android-emulator-runner@v2
             system-images: google_apis_ps16k
             arch: x86_64
-            library-project: blake3-kmp-android-test
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -250,15 +242,12 @@ jobs:
 
       - uses: actions/download-artifact@v7
         with:
-          name: blake3-kmp-android-test-jvm-binary
-          path: blake3-kmp-android-test/src/jvmMain/resources/jni
+          name: blake3-kmp-android-debug-binary
+          path: blake3-kmp/src/androidDebug
 
-      - uses: actions/download-artifact@v7
-        with:
-          name: blake3-kmp-android-test-android-binary
-          path: blake3-kmp-android-test/src/androidMain/jniLibs
-
-      - run: ls -lRh src/androidMain/jniLibs
+      - run: |
+          ls -lRh src/androidMain/jniLibs
+          ls -lRh src/androidDebug
         working-directory: blake3-kmp
 
       - name: Enable KVM on Linux (for Android Emulator)
@@ -301,7 +290,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
-            ./gradlew ":${{ matrix.library-project }}:assembleAndroidDeviceTest" ":${{ matrix.library-project }}:connectedAndroidDeviceTest"
+            ./gradlew ":blake3-kmp:assembleAndroidDeviceTest" ":blake3-kmp:connectedAndroidDeviceTest"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -311,10 +300,57 @@ jobs:
             **/build/reports/androidTests/connected/**
           retention-days: 1
 
+  android-host-test:
+    runs-on: ubuntu-latest
+    needs:
+      - build-binaries
+      - static-checks
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-jvm-binary
+          path: blake3-kmp/src/jvmMain/resources/jni
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-android-binary
+          path: blake3-kmp/src/androidMain/jniLibs
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: blake3-kmp-android-debug-binary
+          path: blake3-kmp/src/androidDebug
+
+      - uses: actions/setup-java@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          distribution: ${{ env.JDK_VENDOR }}
+          java-version: ${{ env.JDK_VERSION }}
+
+      - name: Ensure Android SDK location property
+        run: |
+          if [ -d "$ANDROID_HOME" ]; then
+            echo "sdk.dir=$ANDROID_HOME" > local.properties
+          elif [ -d "$ANDROID_SDK_ROOT" ]; then
+            echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          else
+            mkdir -p /tmp/android-sdk
+            echo "sdk.dir=/tmp/android-sdk" > local.properties
+          fi
+
+      - name: run android host tests (no manual native setup)
+        run: ./gradlew :blake3-kmp:testAndroidHostTest :blake3-kmp:testAndroid
+
   publish:
     needs:
       - jvm-platform-test
       - android-test
+      - android-host-test
       - static-checks
     if: ${{ !cancelled() }}
     permissions:
@@ -357,16 +393,33 @@ jobs:
 
       - uses: actions/download-artifact@v7
         with:
-          name: blake3-kmp-android-test-jvm-binary
-          path: blake3-kmp-android-test/src/jvmMain/resources/jni
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: blake3-kmp-android-test-android-binary
-          path: blake3-kmp-android-test/src/androidMain/jniLibs
+          name: blake3-kmp-android-debug-binary
+          path: blake3-kmp/src/androidDebug
 
       - name: generate library to maven local
         run: ./gradlew publishToMavenLocal
+
+      - name: verify published AAR contents
+        run: |
+          AAR_DIR=~/.m2/repository/com/akhsaul/blake3
+          echo "published AARs:"
+          find "$AAR_DIR" -name "*.aar" | sort
+          REL=$(find "$AAR_DIR/blake3-kmp-android" -name "*.aar" | head -1)
+          [ -n "$REL" ] || { echo "ERROR: missing release android AAR"; exit 1; }
+          echo "release AAR: $REL"
+          unzip -l "$REL" | grep "jni/arm64-v8a/libblake3-kmp.so" || { echo "ERROR: release AAR missing arm64-v8a"; exit 1; }
+          unzip -l "$REL" | grep "jni/x86/libblake3-kmp.so" || { echo "ERROR: release AAR missing x86"; exit 1; }
+          if unzip -l "$REL" | grep -q "jni/x86_64/"; then echo "ERROR: release AAR must not contain x86_64"; exit 1; fi
+          MATCHES=$(for a in $(find "$AAR_DIR" -name "*.aar"); do unzip -l "$a" | grep -q "jni/x86_64/libblake3-kmp.so" && echo "$a"; done)
+          [ -n "$MATCHES" ] || { echo "ERROR: no published AAR contains x86_64 (debug variant broken?)"; exit 1; }
+          echo "x86_64 found in: $MATCHES"
+          DBG=$(echo "$MATCHES" | head -1)
+          TMP=$(mktemp -d)
+          unzip -q -o "$DBG" classes.jar -d "$TMP"
+          unzip -l "$TMP/classes.jar" | grep "jni/amd64/libblake3-kmp.so" || { echo "ERROR: debug classes.jar missing desktop linux-x64"; exit 1; }
+          unzip -l "$TMP/classes.jar" | grep "jni/aarch64/libblake3-kmp.so" || { echo "ERROR: debug classes.jar missing desktop linux-arm64"; exit 1; }
+          rm -rf "$TMP"
+          echo "AAR verification passed"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -389,6 +442,7 @@ jobs:
     needs:
       - jvm-platform-test
       - android-test
+      - android-host-test
       - static-checks
     if: github.ref_type == 'tag'
     permissions:
@@ -422,13 +476,8 @@ jobs:
 
       - uses: actions/download-artifact@v7
         with:
-          name: blake3-kmp-android-test-jvm-binary
-          path: blake3-kmp-android-test/src/jvmMain/resources/jni
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: blake3-kmp-android-test-android-binary
-          path: blake3-kmp-android-test/src/androidMain/jniLibs
+          name: blake3-kmp-android-debug-binary
+          path: blake3-kmp/src/androidDebug
 
       - name: Publish to GitHub Packages
         run: ./gradlew publishAllPublicationsToGitHubPackagesRepository

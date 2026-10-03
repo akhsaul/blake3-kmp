@@ -32,6 +32,4 @@ plugins {
 }
 
 include(":blake3-kmp")
-include(":blake3-kmp-android-test")
-project(":blake3-kmp-android-test").projectDir = file("blake3-kmp-android-test")
 include(":blake3-ffm")

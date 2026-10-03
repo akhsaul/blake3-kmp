@@ -11,8 +11,8 @@ private val loaded = AtomicBoolean(false)
 internal actual fun loadNativeLibrary() {
     if (loaded.getAndSet(true)) return
 
-    val osName = System.getProperty("os.name").lowercase(US)
-    val osArch = System.getProperty("os.arch").lowercase(US)
+    val osName = (System.getProperty("os.name") ?: "").lowercase(US)
+    val osArch = (System.getProperty("os.arch") ?: "").lowercase(US)
 
     val libName =
         when {

@@ -21,8 +21,8 @@ internal actual fun loadNativeLibrary() {
         // /native-host/* when packaging Android apps.
     }
 
-    val osName = System.getProperty("os.name").lowercase(US)
-    val osArch = System.getProperty("os.arch").lowercase(US)
+    val osName = (System.getProperty("os.name") ?: "").lowercase(US)
+    val osArch = (System.getProperty("os.arch") ?: "").lowercase(US)
 
     val libName =
         when {

@@ -36,24 +36,16 @@ jobs:
         run: |
           zig build jvm -p src/jvmMain/resources/jni
           cp -R src/jvmMain/resources/jni/* ../blake3-ffm/src/main/resources/jni/
-          mkdir -p src/androidDebug/jniLibs src/androidDebug/resources/jni
-          cp -R src/jvmMain/resources/jni/. src/androidDebug/resources/jni/
           zig build android -p src/androidMain/jniLibs
-          zig build android-test -p src/androidDebug/jniLibs
         working-directory: blake3-kmp
 
       - name: check all files
         run: |
           ls -lRh blake3-kmp/src/androidMain/jniLibs
-          ls -lRh blake3-kmp/src/androidDebug/jniLibs
 
           find blake3-kmp/src/jvmMain/resources/jni -name "*.pdb" -type f -delete
           find blake3-kmp/src/jvmMain/resources/jni -name "*.lib" -type f -delete
           ls -lRh blake3-kmp/src/jvmMain/resources/jni
-
-          find blake3-kmp/src/androidDebug/resources/jni -name "*.pdb" -type f -delete
-          find blake3-kmp/src/androidDebug/resources/jni -name "*.lib" -type f -delete
-          ls -lRh blake3-kmp/src/androidDebug/resources/jni
 
           find blake3-ffm/src/main/resources/jni -name "*.pdb" -type f -delete
           find blake3-ffm/src/main/resources/jni -name "*.lib" -type f -delete
@@ -69,12 +61,6 @@ jobs:
         with:
           name: blake3-kmp-android-binary
           path: blake3-kmp/src/androidMain/jniLibs
-          if-no-files-found: error
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: blake3-kmp-android-debug-binary
-          path: blake3-kmp/src/androidDebug
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v7
@@ -173,11 +159,6 @@ jobs:
         with:
           name: blake3-kmp-android-binary
           path: blake3-kmp/src/androidMain/jniLibs
-
-      - uses: actions/download-artifact@v7
-        with:
-          name: blake3-kmp-android-debug-binary
-          path: blake3-kmp/src/androidDebug
 
       - uses: actions/setup-java@v5
         env:

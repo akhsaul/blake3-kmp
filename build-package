@@ -13,33 +13,25 @@ fi
 
 rm -rf blake3-kmp/src/jvmMain/resources/jni
 rm -rf blake3-kmp/src/androidMain/jniLibs
-rm -rf blake3-kmp/src/androidDebug/jniLibs
-rm -rf blake3-kmp/src/androidDebug/resources/jni
 rm -rf blake3-ffm/src/main/resources/jni
 
 mkdir -p blake3-kmp/src/jvmMain/resources/jni
 mkdir -p blake3-kmp/src/androidMain/jniLibs
-mkdir -p blake3-kmp/src/androidDebug/jniLibs
-mkdir -p blake3-kmp/src/androidDebug/resources/jni
 mkdir -p blake3-ffm/src/main/resources/jni
 
 cd blake3-kmp
 zig build android -p src/androidMain/jniLibs
-zig build android-test -p src/androidDebug/jniLibs
 zig build jvm -p src/jvmMain/resources/jni
 cd ..
 
-cp -R blake3-kmp/src/jvmMain/resources/jni/. blake3-kmp/src/androidDebug/resources/jni/
 cp -R blake3-kmp/src/jvmMain/resources/jni/. blake3-ffm/src/main/resources/jni/
 
-find blake3-kmp/src/jvmMain/resources/jni blake3-kmp/src/androidDebug/resources/jni blake3-ffm/src/main/resources/jni -name "*.pdb" -type f -delete
-find blake3-kmp/src/jvmMain/resources/jni blake3-kmp/src/androidDebug/resources/jni blake3-ffm/src/main/resources/jni -name "*.lib" -type f -delete
+find blake3-kmp/src/jvmMain/resources/jni blake3-ffm/src/main/resources/jni -name "*.pdb" -type f -delete
+find blake3-kmp/src/jvmMain/resources/jni blake3-ffm/src/main/resources/jni -name "*.lib" -type f -delete
 
-printf '\n===== production Android JNI (arm64-v8a, armeabi-v7a, x86) =====\n'
+printf '\n===== Android JNI (arm64-v8a, armeabi-v7a, x86_64, x86) =====\n'
 ls -lRh blake3-kmp/src/androidMain/jniLibs
-printf '\n===== debug-only Android JNI (x86_64) =====\n'
-ls -lRh blake3-kmp/src/androidDebug/jniLibs
-printf '\n===== desktop JVM JNI (also copied to androidDebug resources) =====\n'
+printf '\n===== desktop JVM JNI =====\n'
 ls -lRh blake3-kmp/src/jvmMain/resources/jni
 printf '\n---------- zig build is done ----------\n'
 

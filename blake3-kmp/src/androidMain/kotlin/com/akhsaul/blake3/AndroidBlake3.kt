@@ -15,9 +15,10 @@ internal actual fun loadNativeLibrary() {
         System.loadLibrary("blake3-kmp")
         return
     } catch (_: UnsatisfiedLinkError) {
-        // Not running on Android (e.g. a desktop JVM executing host unit tests):
-        // fall through to the desktop libraries bundled as resources.
-        // The debug AAR carries them in classes.jar; the release AAR does not.
+        // Not running on Android (e.g. a desktop JVM executing host unit tests
+        // against the Android variant): fall through to desktop libraries
+        // bundled as resources, if present. Host tests normally resolve the
+        // JVM variant instead, which always carries them.
     }
 
     val osName = System.getProperty("os.name").lowercase(US)

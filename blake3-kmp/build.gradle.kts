@@ -4,7 +4,6 @@ import com.vanniktech.maven.publish.SourcesJar
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.java.TargetJvmEnvironment
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.plugin.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
@@ -42,15 +41,17 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
-        // Publish both build types from this single module:
-        // - release AAR: production ABIs only (arm64-v8a, armeabi-v7a, x86)
-        // - debug AAR: production ABIs + x86_64 for emulator tests +
-        //   desktop JNI in classes.jar so host unit tests run with no setup.
-        // macOS x86_64 desktop binaries live under the amd64 resource dir
-        // (see blake3-kmp/build.zig); the loader tries both names.
-        publishLibraryVariants("release", "debug")
+        // Single AAR (AGP 9 single-variant architecture): src/androidMain/jniLibs
+        // carries all four ABIs (arm64-v8a, armeabi-v7a, x86, x86_64).
+        // Desktop JNI is intentionally NOT packaged: host tests resolve the
+        // JVM variant instead (see projectsEvaluated attributes below).
     }
     applyDefaultHierarchyTemplate()
+
+    // NOTE: single-variant architecture (AGP 9 com.android.kotlin.multiplatform.library
+    // publishes exactly one Android AAR; there is no debug/release split, and KGP's
+    // KotlinAndroidTarget.publishLibraryVariants does not apply (no such target exists).
+    // Publishing is driven by mavenPublishing.androidVariantsToPublish below (release).
 
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
@@ -71,14 +72,6 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.androidx.test.runner)
             implementation(libs.androidx.test.ext.junit)
-        }
-        // Debug-only resources (desktop JNI for host tests) live in
-        // src/androidDebug/resources, populated by CI (see build-package).
-        // Declared explicitly so packaging does not depend on source-set
-        // dir conventions; a missing dir contributes nothing.
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        invokeWhenCreated("androidDebug") {
-            resources.srcDir("src/androidDebug/resources")
         }
     }
 }
@@ -113,9 +106,8 @@ mavenPublishing {
             // - `SourcesJar.Sources()` publish the sources
             sourcesJar = SourcesJar.None(),
             // configure which Android library variants to publish if this project has an Android target
-            // release = production ABIs; debug = +x86_64 and desktop JNI for tests.
-            // Must agree with kotlin.android.publishLibraryVariants above.
-            androidVariantsToPublish = listOf("release", "debug"),
+            // defaults to "release" when using the main plugin and nothing for the base plugin
+            androidVariantsToPublish = listOf("release"),
         ),
     )
     coordinates(group.toString(), "blake3-kmp", version.toString())

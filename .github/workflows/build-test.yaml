@@ -37,6 +37,10 @@ jobs:
           zig build jvm -p src/jvmMain/resources/jni
           cp -R src/jvmMain/resources/jni/* ../blake3-ffm/src/main/resources/jni/
           zig build android -p src/androidMain/jniLibs
+          mkdir -p src/androidMain/resources/native-host
+          cp -R src/jvmMain/resources/jni/aarch64 src/androidMain/resources/native-host/
+          cp -R src/jvmMain/resources/jni/amd64 src/androidMain/resources/native-host/
+          find src/androidMain/resources/native-host -name "libblake3-kmp.so" -exec sh -c 'mv "$1" "$1.bin"' _ {} \;
         working-directory: blake3-kmp
 
       - name: check all files
@@ -46,6 +50,11 @@ jobs:
           find blake3-kmp/src/jvmMain/resources/jni -name "*.pdb" -type f -delete
           find blake3-kmp/src/jvmMain/resources/jni -name "*.lib" -type f -delete
           ls -lRh blake3-kmp/src/jvmMain/resources/jni
+
+          find blake3-kmp/src/androidMain/resources/native-host -name "libblake3-kmp.so" -exec sh -c 'mv "$1" "$1.bin"' _ {} \;
+          find blake3-kmp/src/androidMain/resources/native-host -name "*.pdb" -type f -delete
+          find blake3-kmp/src/androidMain/resources/native-host -name "*.lib" -type f -delete
+          ls -lRh blake3-kmp/src/androidMain/resources/native-host
 
           find blake3-ffm/src/main/resources/jni -name "*.pdb" -type f -delete
           find blake3-ffm/src/main/resources/jni -name "*.lib" -type f -delete
@@ -159,6 +168,14 @@ jobs:
         with:
           name: blake3-kmp-android-binary
           path: blake3-kmp/src/androidMain/jniLibs
+
+      - name: reconstruct android native-host from jvm binary
+        run: |
+          mkdir -p blake3-kmp/src/androidMain/resources/native-host
+          cp -R blake3-kmp/src/jvmMain/resources/jni/aarch64 blake3-kmp/src/androidMain/resources/native-host/
+          cp -R blake3-kmp/src/jvmMain/resources/jni/amd64 blake3-kmp/src/androidMain/resources/native-host/
+          find blake3-kmp/src/androidMain/resources/native-host -name "libblake3-kmp.so" -exec sh -c 'mv "$1" "$1.bin"' _ {} \;
+          ls -lRh blake3-kmp/src/androidMain/resources/native-host
 
       - uses: actions/setup-java@v5
         env:

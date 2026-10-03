@@ -1,10 +1,7 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
-import org.gradle.api.attributes.Attribute
-import org.gradle.api.attributes.java.TargetJvmEnvironment
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -31,6 +28,9 @@ kotlin {
             libs.versions.minSdk
                 .get()
                 .toInt()
+        androidResources {
+            enable = true
+        }
         withDeviceTest {
             instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
             execution = "HOST"
@@ -43,8 +43,10 @@ kotlin {
         }
         // Single AAR (AGP 9 single-variant architecture): src/androidMain/jniLibs
         // carries all four ABIs (arm64-v8a, armeabi-v7a, x86, x86_64).
-        // Desktop JNI is intentionally NOT packaged: host tests resolve the
-        // JVM variant instead (see projectsEvaluated attributes below).
+        // Desktop JNI for host JVM tests is bundled under
+        // src/androidMain/resources/native-host/ (-> /native-host/* in
+        // classes.jar). Android app consumers exclude it at packaging:
+        // packaging { resources { excludes += setOf("/native-host/*") } }.
     }
     applyDefaultHierarchyTemplate()
 
@@ -72,21 +74,6 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.androidx.test.runner)
             implementation(libs.androidx.test.ext.junit)
-        }
-    }
-}
-
-gradle.projectsEvaluated {
-    listOf("androidHostTestCompileClasspath", "androidHostTestRuntimeClasspath").forEach { configurationName ->
-        configurations.findByName(configurationName)?.attributes?.apply {
-            attribute(
-                Attribute.of("org.jetbrains.kotlin.platform.type", KotlinPlatformType::class.java),
-                KotlinPlatformType.jvm,
-            )
-            attribute(
-                TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
-                objects.named(TargetJvmEnvironment::class.java, TargetJvmEnvironment.STANDARD_JVM),
-            )
         }
     }
 }

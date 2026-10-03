@@ -54,7 +54,9 @@ zig-out/
 examples/
 **/jni/*
 **/jniLibs/*
+**/native-host/*
 
 # include the folder itself
 !**/jni/.gitkeep
 !**/jniLibs/.gitkeep
+!**/native-host/.gitkeep

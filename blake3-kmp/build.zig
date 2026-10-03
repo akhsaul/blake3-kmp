@@ -5,12 +5,13 @@ pub fn build(b: *std.Build) void {
     const ndk_opt = b.option([]const u8, "ndk", "Path to Android NDK");
     const jvm_step = b.step("jvm", "Build JVM Desktop targets");
     const android_step = b.step("android", "Build Android targets");
+    const android_test_step = b.step("android-test", "Build Android targets including x86_64 for test artifacts");
 
     // --- Desktop Targets ---
     setupTarget(b, jvm_step, .linux, .aarch64, .gnu, "aarch64", null);
     setupTarget(b, jvm_step, .linux, .x86_64, .gnu, "amd64", null);
     setupTarget(b, jvm_step, .macos, .aarch64, null, "aarch64", null);
-    setupTarget(b, jvm_step, .macos, .x86_64, null, "x86_64", null);
+    setupTarget(b, jvm_step, .macos, .x86_64, null, "amd64", null);
     setupTarget(b, jvm_step, .windows, .x86_64, null, "amd64", null);
     setupTarget(b, jvm_step, .windows, .aarch64, null, "aarch64", null);
 
@@ -18,8 +19,10 @@ pub fn build(b: *std.Build) void {
     const ndk_path = getNdkPath(b, ndk_opt);
     setupTarget(b, android_step, .linux, .aarch64, .android, "arm64-v8a", ndk_path);
     setupTarget(b, android_step, .linux, .arm, .androideabi, "armeabi-v7a", ndk_path);
-    setupTarget(b, android_step, .linux, .x86_64, .android, "x86_64", ndk_path);
     setupTarget(b, android_step, .linux, .x86, .android, "x86", ndk_path);
+
+    // The test distribution contains only x86_64 for emulator testing.
+    setupTarget(b, android_test_step, .linux, .x86_64, .android, "x86_64", ndk_path);
 }
 
 fn setupTarget(
